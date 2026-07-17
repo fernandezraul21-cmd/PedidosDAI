@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos Arco Iris</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#fdf6e3 0%,#fce4ec 50%,#e8f5e9 100%);min-height:100vh;padding:16px}
+.container{max-width:1200px;margin:0 auto}
+.header{background:linear-gradient(135deg,#ff6b6b,#ffa726,#ffee58,#66bb6a,#42a5f5,#ab47bc);border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 4px 20px rgba(0,0,0,0.15);text-align:center}
+.header h1{color:#fff;font-size:2.2em;text-shadow:2px 2px 4px rgba(0,0,0,0.3);font-weight:900;letter-spacing:2px}
+.header p{color:#fff;font-size:1.1em;opacity:.9;margin-top:4px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.card h2{color:#333;font-size:1.3em;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid;display:inline-block}
+.card h2.c1{border-color:#ff6b6b}
+.card h2.c2{border-color:#ffa726}
+.card h2.c3{border-color:#66bb6a}
+.card h2.c4{border-color:#42a5f5}
+.card h2.c5{border-color:#ab47bc}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column}
+.form-group label{font-size:.85em;color:#666;font-weight:600;margin-bottom:2px}
+.form-group input,.form-group select{padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:1em;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{outline:0;border-color:#ffa726}
+.cliente-search{position:relative}
+.cliente-search .suggestions{position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #e0e0e0;border-top:0;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;display:none}
+.cliente-search .suggestions div{padding:8px 12px;cursor:pointer;font-size:.9em;border-bottom:1px solid #f0f0f0}
+.cliente-search .suggestions div:hover{background:#fff3e0}
+.cliente-search .suggestions div .ciudad{color:#999;font-size:.8em}
+.tabla-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+table th{background:linear-gradient(135deg,#ffa726,#ff6b6b);color:#fff;padding:10px 8px;text-align:center;font-weight:700;white-space:nowrap;position:sticky;top:0}
+table th:first-child{text-align:left;min-width:130px}
+table td{padding:8px;border-bottom:1px solid #f0f0f0;text-align:center}
+table td:first-child{text-align:left;font-weight:600;color:#444}
+table tr:hover{background:#fff8e1}
+table tr.total-row{background:#fff3e0;font-weight:700}
+table tr.total-row td{border-top:2px solid #ffa726}
+input.qty{width:60px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;text-align:center;font-size:.9em;font-weight:600}
+input.qty:focus{outline:0;border-color:#ffa726;box-shadow:0 0 0 3px rgba(255,167,38,0.2)}
+.simple-qty input.qty{width:80px}
+.resumen{background:#f5f5f5;border-radius:12px;padding:16px;margin-top:16px}
+.resumen h3{color:#333;margin-bottom:8px}
+.resumen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.resumen-item{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.resumen-item .label{font-size:.75em;color:#888;text-transform:uppercase;font-weight:600}
+.resumen-item .value{font-size:1.4em;font-weight:900;color:#ff6b6b;margin-top:2px}
+.resumen-item .value.green{color:#66bb6a}
+.resumen-item .value.blue{color:#42a5f5}
+.resumen-item .value.purple{color:#ab47bc}
+.total-general{background:linear-gradient(135deg,#ff6b6b,#ffa726);color:#fff;padding:16px;border-radius:12px;text-align:center;font-size:1.6em;font-weight:900;margin-top:12px;box-shadow:0 2px 12px rgba(255,107,107,0.3)}
+.acciones{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.btn{flex:1;min-width:200px;padding:14px 24px;border:0;border-radius:10px;font-size:1em;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;text-align:center}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.15)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,#ff6b6b,#ffa726);color:#fff}
+.btn-secondary{background:linear-gradient(135deg,#42a5f5,#66bb6a);color:#fff}
+.btn-danger{background:linear-gradient(135deg,#ef5350,#e53935);color:#fff}
+.btn-outline{background:#fff;color:#666;border:2px solid #e0e0e0}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.resumen-texto{background:#fff;border:2px solid #e0e0e0;border-radius:8px;padding:16px;margin-top:12px;max-height:300px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.85em;line-height:1.5;white-space:pre-wrap;display:none}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:10px;font-size:.9em;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:1000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.cat-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.cat-header:hover{opacity:.8}
+.cat-header .toggle{font-size:.8em;color:#999;transition:transform .2s}
+.cat-header .toggle.open{transform:rotate(180deg)}
+.cat-body{overflow:hidden;transition:max-height .3s ease}
+.cat-body.collapsed{max-height:0}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>🌈 ARCO IRIS</h1>
+  <p>Hoja de Pedidos — Decoración para toda ocasión</p>
+</div>
+
+<div class="card">
+  <h2 class="c1">📋 Datos del Cliente</h2>
+  <div class="form-grid">
+    <div class="form-group cliente-search">
+      <label>Buscar Cliente</label>
+      <input type="text" id="searchCliente" placeholder="Escriba nombre del cliente..." autocomplete="off">
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+    <div class="form-group">
+      <label>Fecha del Pedido</label>
+      <input type="date" id="fecha">
+    </div>
+    <div class="form-group">
+      <label>Nombre del Cliente</label>
+      <input type="text" id="cliente" placeholder="Nombre completo">
+    </div>
+    <div class="form-group">
+      <label>Dirección</label>
+      <input type="text" id="direccion" placeholder="Dirección">
+    </div>
+    <div class="form-group">
+      <label>Teléfono</label>
+      <input type="text" id="telefono" placeholder="Teléfono">
+    </div>
+    <div class="form-group">
+      <label>Ciudad</label>
+      <input type="text" id="ciudad" placeholder="Ciudad">
+    </div>
+    <div class="form-group">
+      <label>NIT</label>
+      <input type="text" id="nit" placeholder="NIT">
+    </div>
+    <div class="form-group">
+      <label>Vendedor</label>
+      <input type="text" id="vendedor" placeholder="Vendedor">
+    </div>
+  </div>
+</div>
+
+<div id="categorias"></div>
+
+<div class="card">
+  <h2 class="c4">📊 Resumen del Pedido</h2>
+  <div class="resumen" id="resumenContainer">
+    <div class="resumen-grid" id="resumenGrid"></div>
+    <div class="total-general" id="totalGeneral">Total: 0 unidades</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="c2">📬 Enviar Pedido</h2>
+  <p style="color:#666;margin-bottom:12px">Genere el resumen de su pedido para enviarlo por correo electrónico a Arco Iris.</p>
+  <div class="acciones">
+    <button class="btn btn-primary" id="btnGenerar">📄 Generar Resumen</button>
+    <button class="btn btn-secondary" id="btnCopiar" disabled>📋 Copiar al Portapapeles</button>
+    <button class="btn btn-secondary" id="btnDescargar" disabled>⬇️ Descargar (.txt)</button>
+    <button class="btn btn-primary" id="btnEmail">📧 Enviar por Correo</button>
+    <button class="btn btn-danger" id="btnLimpiar">🗑️ Limpiar Pedido</button>
+  </div>
+  <div class="resumen-texto" id="resumenTexto"></div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== CLIENT DATA =====
+const CLIENTES = [{"n": "EDGAR DE JESUS BOTERO", "d": "CRA 13 # 11-35 C.C SAN CARLOS", "t": "3187355256", "i": "11312497", "c": "BOGOTA"}, {"n": "ABC PARTY", "d": "CR. 9 Nº 5-57 POPAYAN", "t": "3002699853", "i": "34563398-5", "c": "POPAYAN (CAUCA)"}, {"n": "ABRAKADABRA", "d": "CLL 53 No. 73 A 54", "t": "4102890", "i": "79628735-9", "c": "BOGOTA"}, {"n": "ADRIANA SEGURA", "d": "CALLE 14 # 16-21 (GIRARDOT)", "t": "3044523879", "i": "", "c": "GIRARDOT (C/MARCA)"}, {"n": "ADRIANA STEFANY CARRANZA", "d": "CALLE 37G# 27-42( VILLAVICENCIO)", "t": "3183988233", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "ALADINO GIRALDO", "d": "CALLE 8 SUR No 69D-51", "t": "3118575733", "i": "", "c": "BOGOTA"}, {"n": "ALBA BARRAGAN", "d": "", "t": "3142461363", "i": "", "c": "BOGOTA"}, {"n": "ALBA GONZALES", "d": "CALLE 57A No 80D-18", "t": "3207812785", "i": "", "c": "BOGOTA"}, {"n": "ALBERTO JIMENEZ", "d": "CLL. 9 Nº 12-11 CALI", "t": "8894844", "i": "16609449-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ALDEMAR SALINAS", "d": "CLL. 19 Nº 20-05 SUR", "t": "4084909", "i": "79484481-3", "c": "BOGOTA"}, {"n": "ALEGRIAS Y FIESTAS", "d": "CRA 7 # 6-41 (ESPINAL-TOLIMA)", "t": "3155401645", "i": "1121823415-5", "c": "ESPINAL (TOLIMA)"}, {"n": "ALEJANDRO ARIAS", "d": "CRA 41 B # 37-28 B.LA UNION (CALI)", "t": "3174692536", "i": "1144099679", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ALEJANDRO GOMEZ \"BODEGA DE LA FIESTA\"", "d": "calle 29 # 27-56 (PALMIRA)", "t": "3016779316", "i": "1113640199", "c": "PALMIRA (VALLE)"}, {"n": "ALEJANDRO MARTINEZ", "d": "CLL. 11ª Nº18-24", "t": "4093886", "i": "", "c": "BOGOTA"}, {"n": "ALEX GUZMAN (LA PIÑATA)", "d": "CALLE 17 # 21 A-28 PISO 1 (PASTO-NARIÑO)", "t": "3183651662", "i": "", "c": "PASTO (NARIÑO)"}, {"n": "ALEXANDER SALAZAR GOMEZ", "d": "CRA 51 # 50-43  (SEVILLA-VALLE)", "t": "3205119239", "i": "1076903798-1", "c": "SEVILLA (VALLE)"}, {"n": "ALEXANDRA NUÑEZ", "d": "CLL.47 Nº 10-71", "t": "4486497", "i": "66899449-1", "c": "BOGOTA"}, {"n": "ALEXANDRA SOLER MORENO", "d": "CRA 1 # 40-14  LOCAL-7  (TUNJA)", "t": "3203057005", "i": "1049602497-1", "c": "TUNJA (BOYACA)"}, {"n": "ALFONSO GIRALDO", "d": "CRA 7 Nº 13-27", "t": "8882374", "i": "94544598-9", "c": "BOGOTA"}, {"n": "ALFONSO MELO", "d": "CALLE 52 Nº 12C-11 (CALI)", "t": "3185569897", "i": "16650584-6", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ALMACEN MEGAFAN CENTRO", "d": "CRA 5 # 6-55 B.CENTRO (POPAYAN)", "t": "3163104276", "i": "900409291", "c": "POPAYAN (CAUCA)"}, {"n": "ALMACEN MEGAFAN  C.C CAMPANARIO", "d": "CRA 9 # 24 A-21  C.C CAMPANARIO LOCAL 32  (POPAYAN)", "t": "3174656626", "i": "900409291", "c": "POPAYAN (CAUCA)"}, {"n": "ALMIGUELDY", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "AMERICA GOMEZ", "d": "CALLE 14 Nº 15-41 (CALI)", "t": "3174367540", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ANA LUCIA DURAN", "d": "CRA 11 # 10-53 (OCAÑA-NORTE DE SANTANDER)", "t": "3165785329", "i": "37310503", "c": "OCAÑA (SANTANDER)"}, {"n": "ANA LUCIA ESPITIA", "d": "CRA 3 # 3-32  CAPELLANIA (CAJICA)", "t": "", "i": "", "c": "CAJICA (C/MARCA)"}, {"n": "ANA MARIA FIGUEROA", "d": "CRA 4 No 8 39", "t": "8363472", "i": "55006112-8", "c": "BOGOTA"}, {"n": "ANA MONSALVE PIÑATERIA FANTASY", "d": "CC CEDRITOS", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ANDREA DEL PILAR CARVAJAL PLAZAS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ANDREA HERRERA", "d": "CALLE 31 SUR Nº 52-24", "t": "4071850-3144586099", "i": "", "c": "BOGOTA"}, {"n": "ANDREA ROCHA ( GORRO LOCO)", "d": "CALLE 17 A # 96G-83", "t": "3204674275", "i": "", "c": "BOGOTA"}, {"n": "ANDREA VILLAMARIN", "d": "CALLE 30 # 5 A -86 ESTE LOCAL-111", "t": "3016287695", "i": "", "c": "BOGOTA"}, {"n": "ANDRES CAMACHO CANDELO", "d": "CRA 42 D # 51-35 (CALI-VALLE)", "t": "3183564464", "i": "14701297", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ANDRES CANTILLO SOTTO", "d": "CALLE 8 # 8-08 B.CHAPINERO (ORITO-PUTUMAYO)", "t": "", "i": "1124863134", "c": "ORITO (PUTUMAYO)"}, {"n": "ANDRES FELIPE GOMEZ", "d": "CRA 28 # 30-33 (PALMIRA-VALLE)", "t": "3147629866", "i": "1038407397-6", "c": "PALMIRA (VALLE)"}, {"n": "ANDRES HERRERA", "d": "CALLE 40 Nº 41H-15 8CALI)", "t": "3931217", "i": "1107069498-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ANDRES OROZCO", "d": "CRA 52 A No 45 34 LOCAL 111 MEDELLIN", "t": "2933672", "i": "1130642086", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "ANDRES QUINTERO", "d": "CALLE 53 # 16-33 LOCAL-119 GALERIAS", "t": "3176384997", "i": "", "c": "BOGOTA"}, {"n": "ANDRES SALINAS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ANDY DOMINGUEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ANGEL YESID TABARES LOPEZ", "d": "CRA 55  #45 A-34  CENTRO (MEDELLIN)", "t": "3152025330", "i": "15349695", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "ANGELA", "d": "CRA 13 Nº 13-54 CENTRO PIÑATERIA JUANA BANANA(FLORENCIA)", "t": "3154119228", "i": "", "c": "FLORENCIA (CAQUETA)"}, {"n": "ANGELA TERRANOVA TOLEDO", "d": "TRANSV", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ANGELICA MARIA VALENCIA", "d": "MZ 24 CASA 19 POBLADO 2 (PEREIRA)", "t": "3167062725", "i": "42164236-8", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "ANGELICA TRIANA", "d": "calle 31 # 27-44  B. centro (PALMIRA)", "t": "3105982935", "i": "52264026-3", "c": "PALMIRA (VALLE)"}, {"n": "ANGIE CAROLINA MARIN", "d": "CRA 81 C # 42-63 SUR B.EL AMPARO", "t": "3144571597", "i": "", "c": "BOGOTA"}, {"n": "ANGIE RAMIREZ", "d": "CALLE 8 SUR Nº 37-54 (BOGOTA)", "t": "3208717816", "i": "1136882978", "c": "BOGOTA"}, {"n": "ANYELA LORENA LOPEZ CAPOTE", "d": "MZ 9-CASA 21 B.POBLADO CAMPESTRE  (CANDELARIA-VALLE)", "t": "3113437350", "i": "1113521072", "c": "CANDELARIA (VALLE)"}, {"n": "ARCILA SOTO ARANDA", "d": "CRA 6 # 8-36 CENTRO (MOCOA-PUTUMAYO)", "t": "3112019391", "i": "40079253-2", "c": "MOCOA (PUTUMAYO)"}, {"n": "ARIEL LOZANO SIACHOQUE", "d": "CRA 13 # 10-35 (VILLANUEVA-CASANARE)", "t": "3133472583", "i": "7060990", "c": "VILLANUEVA (CASANARE)"}, {"n": "ARLEY HOYOS", "d": "Cra 20 No 13-45 Yopal Centro", "t": "3128534875", "i": "", "c": "YOPAL (CASANARE)"}, {"n": "ASOALMACENES", "d": "", "t": "3663279", "i": "", "c": "BOGOTA"}, {"n": "ASOCIACION DE RECICLADORES", "d": "CALLE 42 SUR # 24 B-02", "t": "", "i": "", "c": "BOGOTA"}, {"n": "AUGUSTO RONCANCIO", "d": "CARRERA 3 ESTE No 45A-09", "t": "3124672350", "i": "", "c": "BOGOTA"}, {"n": "AURA MARINA LUNA", "d": "CALLE 47 # 48-48 B.CAFETERO (SEVILLA-VALLE)", "t": "3234042404", "i": "29831777-5", "c": "SEVILLA (VALLE)"}, {"n": "AYDA MARIA CASTELLANOS", "d": "CRA 28 # 38-24   B. VILLA JULIA (VILLAVICENCIO)", "t": "3203424059", "i": "404442505-1", "c": "VILLAVICENCIO (META)"}, {"n": "BARBARA ARDILA", "d": "CRA 10 # 6-18 (GARZON-HUILA)", "t": "8332006", "i": "", "c": "GARZON (HUILA)"}, {"n": "BARGAIN 2000", "d": "CALLE 11 Nº 9-31 (CALI)", "t": "3165249807", "i": "6160203-6", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BEATRIZ GOMEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "BEATRIZ VILLEGAS", "d": "CIUDAD VERDE", "t": "3124342020", "i": "", "c": "SOACHA (C/MARCA)"}, {"n": "BENILDA MERCHAN", "d": "CALLE 81 # 8 D-80  (YOMASA)", "t": "3108081108", "i": "", "c": "BOGOTA"}, {"n": "BERTHA GAITAN", "d": "CALLE 34  # 1 A-51 (SAN MATEO)", "t": "3115846901", "i": "", "c": "SAN MATEO (C/MARCA)"}, {"n": "BIADES MARIN", "d": "CALLE 74 SUR #  88C-42  BOSA SAN BERNARDINO", "t": "3134631242", "i": "1010141291", "c": "BOGOTA"}, {"n": "BIG BANG  PIÑATAS Y REGALOS", "d": "CALLE 9 Nº 30-44 (CALI)", "t": "3136492537", "i": "900985626-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BILLARES ESCALIBUR", "d": "CRA10 Nº 9-19 (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BLADIMIR MARTINEZ", "d": "CRA 19 # 35-66  (PALMIRA)", "t": "2867072", "i": "80061384", "c": "PALMIRA (VALLE)"}, {"n": "BLANCA NUBIA GARCIA", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BLANCA OLIVA RIOS", "d": "CALLE 11 # 4-26 8 (SANTANDER DE QUILICHAO)", "t": "", "i": "", "c": "SANTANDER DE QUILICHAO"}, {"n": "BODEGAS ILUSION S.A.S", "d": "CRA 19 # 36-55  (BUCARAMANGA)", "t": "6978699", "i": "901121952-4", "c": "BUCARAMANGA (SANTANDER)"}, {"n": "BODEGAS ILUSION S.A.S", "d": "Cra 17 No 18-43 (ARMENIA)", "t": "7410194", "i": "900397331-1", "c": "ARMENIA (QUINDIO)"}, {"n": "BODEGAS ILUSION S.A.S", "d": "CRA 11 # 20-34 (PEREIRA)", "t": "3454999", "i": "900397331-1", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "BODEGAS ILUSION S.A.S", "d": "CALLE 10 Nº 9-50 (CALI)", "t": "8881804", "i": "800040182-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BOMBOS Y PLATILLOS", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "BRENDA ORREGO", "d": "CRA 29 # 72 Q-69 (CALI)", "t": "3184903444", "i": "1006182080-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CACHARRERIA BRISTOL", "d": "CRA 52 No 45 49 (medellin)", "t": "5117830", "i": "", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "CACHARRERIA CARAVANA", "d": "CRA 18 # 6 A-12 B.LA ESMERALDA (POPAYAN)", "t": "3168260006", "i": "901375965", "c": "POPAYAN (CAUCA)"}, {"n": "CACHARRERIA LA ESTRELLA S.A.S", "d": "AV 8 # 10-37 (CUCUTA)", "t": "3133009663", "i": "901246685-1", "c": "CUCUTA (NTE. SANTANDER"}, {"n": "CACHARRERIA LA GARZA", "d": "CLL. 33 Nº 34-69 (Villavicencio)", "t": "6630911", "i": "822007832", "c": "VILLAVICENCIO (META)"}, {"n": "CACHARRERIA LA REGALIA SILOE", "d": "DIAG 51D ESTE  Nº 3-02 (CALI)", "t": "5528157", "i": "796214875", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CACHARRERIA PREMIER (LUIS ALBERTO GOMEZ)", "d": "CALLE 16 Nº 13-29 (FLORENCIA)", "t": "4348252", "i": "70692698-3", "c": "FLORENCIA (CAQUETA)"}, {"n": "CACHARRERIA VALENTINA", "d": "DIAG. 26M Nº 87-67 (CALI)", "t": "3193923868", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CACHARRERIA Y PAPELERIA ARCO IRIS", "d": "Cra 52 no 44 84 Local 156 Parque Comercial Cisneros", "t": "5124808", "i": "43413234-6", "c": "BOGOTA"}, {"n": "CAMILO AMAYA", "d": "CALLE 101 #70A-12", "t": "3204895031", "i": "", "c": "BOGOTA"}, {"n": "CAMILO ANDRES VILLEGAS", "d": "CRA 34 # 33-78  C.C MIRAFLORES  LOCAL-", "t": "3164041444", "i": "", "c": "BOGOTA"}, {"n": "CAMILO GIRALDO", "d": "CRA. 9 # 13A-ESQUINA C.C. SULTAN 6 PISO (CALI)", "t": "8853834", "i": "1151936200-6", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CAMILO HERNANDEZ", "d": "DIAG. 64 BIS SUR # 19 C-58  (SAN FRANCISCO)", "t": "3204927422", "i": "80058322", "c": "BOGOTA"}, {"n": "CAMILO PORTOCARREÑO WISAMANO", "d": "CALLE 9 # 14-31  GUACARY (VALLE DEL CAUCA)", "t": "3506507289", "i": "1192742211", "c": "VALLE DEL CAUCA"}, {"n": "CARLOS EDUARDO ARIAS", "d": "CRA 13 # 7-55 (BUGA-VALLE)", "t": "3168003965", "i": "11440384302", "c": "BUGA (VALLE)"}, {"n": "CARLOS MARIO GIRALDO", "d": "CRA 54 No 46 52 Local 114", "t": "5113098", "i": "71278654-9", "c": "BOGOTA"}, {"n": "CARLOS MARTINEZ", "d": "", "t": "3214478583", "i": "", "c": "BOGOTA"}, {"n": "CARLOS VALENCIA", "d": "CALLE 9 No 27-47 Alameda (Cali)", "t": "310 4984558", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CARMEN RAFAELA LACOUTURE BERMUDEZ", "d": "CALLE 4 # 6-54 SAN  JUAN DEL CESAR (GUAJIRA)", "t": "3166489208", "i": "49731858-7", "c": "GUAJIRA (RIOACHA)"}, {"n": "CARMEN VICTORIA LOPEZ SANCHEZ", "d": "CRA 22 # 1-45 B.SOCIEGO (MADRID)", "t": "3104773518-3123073441", "i": "1073171334", "c": "MADRID (C/MARCA)"}, {"n": "CARMENZA ARDILA", "d": "DIAG 40 No 20 27", "t": "3115463195", "i": "", "c": "BOGOTA"}, {"n": "CAROLINA ARTEAGA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CAROLINA CASTILLO", "d": "", "t": "3164233413", "i": "", "c": "BOGOTA"}, {"n": "CAROLINA FLOWERS", "d": "CALLE 8 SUR No 37-54", "t": "4960222", "i": "", "c": "BOGOTA"}, {"n": "CAROLINA GIL", "d": "CALLE 91 # 10-17", "t": "3143632541", "i": "", "c": "BOGOTA"}, {"n": "CAROLINA HERRERA", "d": "CALLE 39 No.30A-14 CENTRO ISA PARTY (VILLAVICENCIO)", "t": "3187022220", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "CAROLINA HERRERA ROZO", "d": "CALLE 39 # 30 A-14  CENTRO (VILLAVICENCO)", "t": "3138167748", "i": "30080374-0", "c": "VILLAVICENCIO (META)"}, {"n": "CAROLINA MORALES", "d": "CALLE72 J Nº 28C-10 CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CAROLINA TORO GOMEZ", "d": "CALLE 17 Nº 3-106 (IBAGUE)", "t": "3124402346", "i": "38142827-1", "c": "IBAGUE (TOLIMA)"}, {"n": "CAROLINA VARON", "d": "CALLE 15 # 16-47 CENTRO  (ACACIAS-META)", "t": "3116566533", "i": "", "c": "ACACIAS (META)"}, {"n": "CAROLINA VASQUEZ \" TU FIESTA Y REGALOS\"", "d": "CRA 9 # 11-50 (CALI)", "t": "4850076", "i": "901116937-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CAROLINE BEJARANO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CATALINA MUÑO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CATALINA SANDOVAL", "d": "CALLE 79 Nº 57-140 edificio soho 79 apto 807 (barranquilla)", "t": "3205631181", "i": "1023860464", "c": "BARRANQUILLA (ATLANTICO)"}, {"n": "CECILIA GOMEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CELEBREMOS EVENTOS", "d": "CALLE 52 Nº 13A-16CALI", "t": "4100279", "i": "900712384-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CENTROPOR", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CESAR BUITRAGO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CESAR BUITRAGO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "CESAR DAVID GUTIERREZ", "d": "CRA 10 # 10-89 PISO 2 ( SOGAMOSO)", "t": "", "i": "", "c": "SOGAMOSO (BOYACA)"}, {"n": "CHILDREN PALACE (Bodega)", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PALACE (UNICENTRO)", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PALACE AV 1 DE MAYO", "d": "CRA 71 D No 8 26 SUR", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PALACE Nº 2", "d": "CR. 58 Nº137A-58", "t": "maicol", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PALACE Nº 3", "d": "COLINA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PLACE", "d": "PATIO BONITO", "t": "3132690339", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN PLACE", "d": "PATIO BONITO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CHILDREN TOYS (SOACHA)", "d": "CALLE 14 Nº 5A- 16 (SOACHA)", "t": "3124960971", "i": "", "c": "SOACHA (C/MARCA)"}, {"n": "CHIQUILLADA  (DANY FORERO)", "d": "CRA 15 Nº 58-45", "t": "4384626", "i": "16985878-4", "c": "BOGOTA"}, {"n": "CHUNCHES PA FIESTAS", "d": "CALLE 119 # 14 A-26", "t": "2222882", "i": "3106189942", "c": "BOGOTA"}, {"n": "CHUNCHES PA FIESTAS", "d": "CALLE 119 # 14 A-26", "t": "2222882", "i": "", "c": "BOGOTA"}, {"n": "CHUNCHES PA FIESTAS", "d": "CALLE 90", "t": "3106189942", "i": "900386892-4", "c": "BOGOTA"}, {"n": "CLARA MARGARITA MENDOZA", "d": "CALLE 8 # 4 A-02 (ARAUCA-ARAUQUITA)", "t": "3125026543", "i": "32905890-1", "c": "ARAUCA (ARAUQUITA)"}, {"n": "CLARENA LEMUS", "d": "CALLE 2A Nº 13-04", "t": "3164450318", "i": "31952800-3", "c": "BOGOTA"}, {"n": "CLAUDIA CAÑON GONZALES", "d": "CALLE 53 # 16-21 LOCAL-108  C.C LA PEDEREA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CLAUDIA HENA LARA(LA REGALONA)", "d": "CLL. 29 Nº 28-17", "t": "2725993", "i": "66901832-8", "c": "BOGOTA"}, {"n": "CLAUDIA HENAO", "d": "CALLE 11 # 7-65 (JAMUNDI)", "t": "", "i": "38889958", "c": "JAMUNDI (VALLE)"}, {"n": "CLAUDIA LORENA CANO", "d": "CALLE 11 # 7-65 (JAMUNDI)", "t": "28889958", "i": "", "c": "JAMUNDI (VALLE)"}, {"n": "CLAUDIA PEÑA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CLAUDIA SALINAS", "d": "CALLE 56 A SUR # 72 C-72", "t": "3209152393", "i": "", "c": "BOGOTA"}, {"n": "CLAUDIA TAMAYO", "d": "CRA 13 Nº 13-32 (SANTA ROSA DE CABAL)", "t": "3147825945", "i": "25175855-2", "c": "SANTA ROSA DE CABAL"}, {"n": "CLIENTES VARIOS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CLOTARIO RAMOS CEBALLOS", "d": "CRA 7 # 3-62B.VILLANELLY  CERRITO-VALLE", "t": "3105057117", "i": "5244336-5", "c": "CERRITO (VALLE)"}, {"n": "COMERCIALIZADORA HAPPY DAYS", "d": "CALLE 15 Nº 9-46", "t": "8805038", "i": "900529378-5", "c": "BOGOTA"}, {"n": "COMERCIALIZADORA LA PIÑATA TULUA", "d": "CALLE 27 # 22-33 TULUA-VALLE", "t": "3218111949", "i": "901651233-0", "c": "TULUA (VALLE)"}, {"n": "COMERCIALIZADORA MDH S.A.S", "d": "CALLE 30 # 64-45 B.CHIPRE  (CARTAGENA)", "t": "3172284689", "i": "901268880-4", "c": "CARTAGENA (BOLIVAR)"}, {"n": "COMERCIALIZADORA MUNDIAL", "d": "CLL. 11 No 11-57", "t": "2811081", "i": "11312102-2", "c": "BOGOTA"}, {"n": "COMERCIALIZADORA MUNDIAL (c.c. estelar)", "d": "cr. 12 a", "t": "", "i": "", "c": "BOGOTA"}, {"n": "CONSTANZA RUIZ", "d": "CRA. 5 No. 6 - 45 (Yumbo)", "t": "6956371", "i": "", "c": "YUMBO (VALLE)"}, {"n": "CRISTALERIA CARAVANA", "d": "CALLE 10 # 10-65  (DAGUA-VALLE)", "t": "3146389851", "i": "94421063-2", "c": "DAGUA (VALLE)"}, {"n": "CRISTALERIA CARAVANA", "d": "CALLE 10 No 13-59", "t": "3146389851", "i": "114726780-8", "c": "BOGOTA"}, {"n": "CRISTIAN ANDRES HERRERA ROZO", "d": "CALLE 37A # 29-85 CENTRO BOOM PARTY (VILLAVICENCIO)", "t": "3209131512", "i": "1121893545-3", "c": "VILLAVICENCIO (META)"}, {"n": "CRISTINA MOSCOSO", "d": "", "t": "3208587866", "i": "", "c": "BOGOTA"}, {"n": "CRISTINA ORJUELA", "d": "CALLE 18# 15-04( NUEVA CASTILLA-MOSQUERA)", "t": "", "i": "1015999010-7", "c": "MOS QUERA (C/MARCA)"}, {"n": "DAGOBERTO CAMARGO", "d": "CALLE 152  A #103 D-20  SUBA", "t": "3144018947", "i": "9636064", "c": "BOGOTA"}, {"n": "DANIEL GARCIA (DISTRIBUIDORA PELUTATTOS)", "d": "CRA 9 # 11-50  C.C CALI 2000  LOCAL-210 ( CALI)", "t": "3059224460", "i": "2173593-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DANIEL SANTIAGO GIRALDO TORRES", "d": "CRA 10 # 5-42 PISO-2 (ZIPAQUIRA)", "t": "3178930703", "i": "1001331568", "c": "ZIPAQUIRA (C/MARCA)"}, {"n": "DANIELA MONDRAGON", "d": "CRA 11 # 14-03 B.CENTRAL (VILLA GORGONA-CANDELARIA)", "t": "", "i": "1113534058-1", "c": "VILLA GORGONA (CANDELARIA)"}, {"n": "DARLENY PARRA", "d": "", "t": "3044326676", "i": "", "c": "BOGOTA"}, {"n": "DARLYN CAMPAZ", "d": "BAR. JUAN 23 CL. 7 DE AGOSTO 3B No 35-93 ( Buenavetura)", "t": "3108203786", "i": "29228377-7", "c": "BUENAVENTURA (VALLE)"}, {"n": "DAVID DORADO", "d": "CALLE 13 # 9-37  (GIRARDOT)", "t": "3102252980", "i": "1026275300", "c": "GIRARDOT (C/MARCA)"}, {"n": "DAVID MARTINEZ", "d": "CRA 12 Nº 11-64 C.C.EST. CENTRAL LOCAL 214", "t": "3162543615", "i": "1023895678-8", "c": "BOGOTA"}, {"n": "DAVID RODRIGO RAMIREZ OCAMPO \"TRAKY\"", "d": "CALLE 26 # 24-22  CENTRO (TULUA-VALLE)", "t": "3507929756", "i": "1126239240-7", "c": "TULUA (VALLE)"}, {"n": "DAVID RODRIGO RAMIREZ OCAMPO \"TRAKY\"", "d": "CALLE 5 # 11-73 (SANTANDER DE QULICHAO)", "t": "3507929756", "i": "1126239240-7", "c": "SANTANDER DE QUILICHAO"}, {"n": "DAVID RODRIGO RAMIREZ OCAMPO \"TRAKY\"", "d": "CRA 5 # 13-110 (CARTAGO-VALLE)", "t": "3507929756", "i": "1126239240-7", "c": "CARTAGO (VALLE)"}, {"n": "DAVID RODRIGO RAMIREZ OCAMPO \"TRAKY\"", "d": "TRANSV 7 # 14-149 B.SAN JERONIMO (CARTAGO-VALLE)", "t": "3507929756", "i": "1126239240-7", "c": "CARTAGO (VALLE)"}, {"n": "DECO FIESTAS", "d": "CALLE 151 Nº 15 (LOCAL 1048 C. C. CEDRITOS)", "t": "3209429816", "i": "", "c": "BOGOTA"}, {"n": "DECORACIONES DAVIDS", "d": "GALAN", "t": "3203415545", "i": "", "c": "BOGOTA"}, {"n": "DECORACIONES MUNDO MAGICO", "d": "CALLE 38 # 24-46 (CALARCA)", "t": "", "i": "1097390585", "c": "CALARCA (QUINDIO)"}, {"n": "DEISON GIRALDO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DEIVIS PEREZ", "d": "CALLE 24 SUR  # 6-71  LOCAL-1 ( 20 DE JULIO)", "t": "", "i": "1102229138", "c": "BOGOTA"}, {"n": "DERLY ANGELICA URREGO", "d": "CRA 12 # 8-29 (VILLA NUEVA-CASANARE)", "t": "3185724440", "i": "39950576", "c": "VILLA NUEVA (CASANARE)"}, {"n": "DESECHABLES Y PLASTICOS", "d": "AV LAS PALMAS 10-05 (FUSA)", "t": "8675571", "i": "", "c": "FUSAGASUGA (C/MARCA)"}, {"n": "DIANA BELTRAN", "d": "KR 79 6A 47 BARRIO PIO 12 DIAGONAL AL CORATIENDA LOCAL PLASTIFIESTA", "t": "3005587890", "i": "", "c": "BOGOTA"}, {"n": "DIANA COBO", "d": "CRA 47 #73-13", "t": "3145338380", "i": "", "c": "BOGOTA"}, {"n": "DIANA CRISTINA GALLEGO", "d": "CALLE 39 # 30-29 B.CENTRO  (VILLAVICENCIO)", "t": "3105818824", "i": "40219521-3", "c": "VILLAVICENCIO (META)"}, {"n": "DIANA MARCELA  PACHECO VALDEZ", "d": "CALLE 13 # 13-62  (ACACIAS-META)", "t": "3143173373", "i": "1122137419-5", "c": "ACACIAS (META)"}, {"n": "DIANA MARCELA LONDOÑO", "d": "CALLE 4 # 11-80  CENTRO (LIBANO-TOLIMA)", "t": "3132189746", "i": "1104706012-1", "c": "LIBANO (TOLIMA)"}, {"n": "DIANA MARCELA PARRA", "d": "CRA 5 A # 14-32  VILLA OLIMPICA  (GRANADA-META)", "t": "3228942095", "i": "1124828493-3", "c": "GRANADA (META)"}, {"n": "DIANA MILENA LOPEZ", "d": "CALLE 27 # 9-54 B.LA GRANJA (IBAGUE-TOLIMA)", "t": "3208313829", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "DIANA PATIÑO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DIANA RAMIREZ", "d": "CALLE 13 # 9-37  (GIRARDOT)", "t": "3108139730", "i": "1069832247-7", "c": "GIRARDOT (C/MARCA)"}, {"n": "DIANA SAENZ", "d": "C.C. CEDRITOS 151 8LOCAL 1-048)", "t": "3124790527", "i": "", "c": "BOGOTA"}, {"n": "DIANA ZAMORA", "d": "CRA 56 # 13 G-13 LOCAL-1 B.PRIMERO DE MAYO CALI)", "t": "3146226633", "i": "67011906", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DIAS FELICES (Fredy Patiño)", "d": "CRA 13 Nº 10-88 CENTRO)", "t": "3188361101", "i": "", "c": "BOGOTA"}, {"n": "DIAS FELICES 1 FREDY PATIÑO", "d": "CALLE 11 Nº 11-48 2º PISOC.C. LATINO PLAZA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DIAS FELICES 2 FREDY PATIÑO", "d": "CRA 13 No. 10 - 88", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DIEGO PATIÑO", "d": "San Victorino", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DIGNA ERAZO PAZ", "d": "CRA 18 # 7-12 B.LA ESMERALDA (POPAYAN)", "t": "3114095077", "i": "34549633-3", "c": "POPAYAN (CAUCA)"}, {"n": "DINASTIA EVENTOS", "d": "CALLE 14 # 15-41 (UNION-VALLE)", "t": "3174367540", "i": "1115422646-7", "c": "UNION (VALLE)"}, {"n": "DISTRIBUIDOR DE PAPELERIA LOS MAYORISTAS", "d": "CALLE 21 No 8-58  PEREIRA", "t": "3256050", "i": "900121095-6", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "DISTRIBUIDORA  HYD", "d": "CRA 13 # 11-65   2 PISO (BOGOTA)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA ARCO IRIS", "d": "cra 13 nº 11-56 local 18-20", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA BOOM \"CARRERA 13\"", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA BOOM \"CATEDRAL\"", "d": "CRA 13 # 11-56 CENTRO", "t": "3006386308", "i": "1033746904-6", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA DE QUESOS PUERTO RICO", "d": "CALLE 36Nº 77-04 SUR", "t": "2651135", "i": "11188707-7", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA LA DECIMA", "d": "CALLE 10 # 20-35 (YOPAL)", "t": "3112775496", "i": "1074130619-6", "c": "YOPAL (CASANARE)"}, {"n": "DISTRIBUIDORA OFIESCOLAR", "d": "CALLE 24 # 22-56 (TULUA-VALLE)", "t": "3154782717", "i": "901172333", "c": "TULUA (VALLE)"}, {"n": "DISTRIBUIDORA RHINO FIESTAS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "DISTRIBUIDORA Y PAPELERIA UNICA", "d": "CRA 12 # 9-62  (BUGA)", "t": "3174527978", "i": "900234222-8", "c": "BUGA (VALLE)"}, {"n": "DISTRIFIESTAS IMPORTADORES", "d": "", "t": "3004234419", "i": "", "c": "BOGOTA"}, {"n": "DISTRIMAFER COLOMBIA SAS", "d": "CALLE  30 No 24-81   PALMIRA", "t": "2859743", "i": "900504525-3", "c": "PALMIRA (VALLE)"}, {"n": "DISTRIMIA", "d": "CRA 14  # 10-77  (ARMENIA)", "t": "3117761666", "i": "901171231-6", "c": "ARMENIA (QUINDIO)"}, {"n": "DISTRINAPOLES", "d": "", "t": "3017974040", "i": "", "c": "BOGOTA"}, {"n": "DIXON ALEXANDER CUADROS", "d": "CR. 9 Nº 13-127 LOCAL 123 (CALI)", "t": "8881832", "i": "77103364-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DORA LILIANA MARIN  BALLEN", "d": "CALLE 15 #16-47 (ACACIAS)", "t": "314-3983018", "i": "1122118254-7", "c": "ACACIAS (META)"}, {"n": "DORIS DUQUE", "d": "CLL. 9 Nº 30-69 (CALI)", "t": "5561279", "i": "21779087-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DORIS ROMERO", "d": "CRA 22 Nº 16-51 (PASTO)", "t": "3176471639", "i": "", "c": "PASTO (NARIÑO)"}, {"n": "DUBIAN FERNEY HOYOS", "d": "CALLE 13 # 45-18  (CALI)", "t": "8881397", "i": "16456800-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "DUBIAN GIRALDO \"DOLARAZO CHAPINERO\"", "d": "CRA 5 # 9-15 (YUMBO-VALLE)", "t": "8801481", "i": "16456800-1", "c": "YUMBO (VALLE)"}, {"n": "DURLEY HOYOS", "d": "CALLE 16 Nº 22 A-40 (PASTO)", "t": "7367474", "i": "55065624", "c": "PASTO (NARIÑO)"}, {"n": "DURLEY HOYOS", "d": "CALLE 16 # 3-65 C.C EL GRAN BAZAR (IBAGUE-TOLIMA)", "t": "3164466167", "i": "55065624", "c": "IBAGUE (TOLIMA)"}, {"n": "EDER DE LA ROSA", "d": "CALLE 16 N° 22-52  (PASTO)", "t": "3177270645", "i": "", "c": "PASTO (NARIÑO)"}, {"n": "EDGAR", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "EDGAR  GALVIS", "d": "CALLE 53 SUR #8-12", "t": "3112420203", "i": "", "c": "BOGOTA"}, {"n": "EDGAR VILLEGAS", "d": "CALLE 2B Nº 37B-04 (BOGOTA)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "EDNA ROCIO CABRERA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "EDUARDO GARCIA", "d": "CR. 84C Nº 93-13 (BOSA)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "EDWAR VASQUEZ", "d": "CALLE 11 Nº 7-65 (JAMUNDI)", "t": "3216451088", "i": "74415703-3", "c": "JAMUNDI (VALLE)"}, {"n": "EDWARD TOBON", "d": "CRA 78 G # 38-26 SUR LOCAL PIXEL 16 KENNEDY CENTRO", "t": "3124764135", "i": "", "c": "BOGOTA"}, {"n": "EDWIN  DAVID ALVAREZ", "d": "CALLE 52 B SUR # 29-84", "t": "3163293731", "i": "", "c": "BOGOTA"}, {"n": "EDWIN ARISTIZABAL", "d": "CALLE 32 SUR  No 23B-07", "t": "3002605948", "i": "", "c": "BOGOTA"}, {"n": "EDWIN BRAVO", "d": "CALLE 13 Nº 8-57 LOCAL 43A", "t": "3004327483", "i": "", "c": "BOGOTA"}, {"n": "EDWIN GOMEZ", "d": "CONDOMINIO LA NUBIA # 1 BODEGA-47 (CALI-VIA LA CANDELARIA)", "t": "3107355378", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "EDWIN GOMEZ", "d": "CALLE 70 # 26 M 1-32 NUEVA FLORESTA (CALI) VIKINGOS", "t": "3071253", "i": "16535360", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "EDWIN GOZALES SAVIT", "d": "CRA 4 # 4-39 CENTRO (DONCELLO-CAQUETA)", "t": "3108401473", "i": "96354122", "c": "DONCELLO (CAQUETA)"}, {"n": "EDWIN RAMON GIRALDO", "d": "CR. 9 Nº 11-32 CENTRO (CALI)", "t": "5242496", "i": "94427979-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "EL GRAN TUMBA PRECIOS DE MEDALLO", "d": "CALLE 16 # 11-31  (GIRARDOT)", "t": "3123449586", "i": "901235762", "c": "GIRARDOT (C/MARCA)"}, {"n": "EL MACHETAZO", "d": "CLL.29 No.26-23 (PALMIRA)", "t": "", "i": "815003309-0", "c": "PALMIRA (VALLE)"}, {"n": "EL MUNDO DE LOS JUGUETES", "d": "CRA 1 # 40-14 LOCAL 7 (TUNJA-BOYACA)", "t": "3203057005", "i": "1049602497-1", "c": "TUNJA (BOYACA)"}, {"n": "EL MUNDO DEL MANY", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "EL NUEVO MEGAPUNTO JAMUNDI", "d": "CRA 10 # 15-235 (JAMUNDI-VALLE)", "t": "3116314938", "i": "9013594859", "c": "JAMUNDI (VALLE)"}, {"n": "EL PUNTO DE LAS PROMOCIONES", "d": "CALLE 11 # 11-54 LOCAL-2 (SAHAGUN-CORDOBA)", "t": "3045716964", "i": "1102578817", "c": "SAHAGUN (CORDOBA)"}, {"n": "EL UNIVERSO DE LAS SORPRESAS S.A.S", "d": "CALLE 9 No 30-69 CALI", "t": "3014070690", "i": "900810274-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "EL UNIVERSO DE LOS COSMETICOS", "d": "CRA 9 # 13-135 (CALI-VALLE)", "t": "3102129154", "i": "900747059-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ELBER AVENDAÑO", "d": "CALLE 13 N° 12-34  FLORENCIA)", "t": "3164466167", "i": "12197805", "c": "FLORENCIA (CAQUETA)"}, {"n": "ELIANA MUÑOZ", "d": "CALLE 46 N° 100A-61 (CALI)", "t": "3216324090", "i": "1090335363-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ELIANA XIMENA CARDONA OROZCO", "d": "CRA 25 # 36-26  (CALARCA)", "t": "3174118826", "i": "1144094339-8", "c": "CALARCA (QUINDIO)"}, {"n": "ELIANA XIMENA CARDONA OROZCO", "d": "CALLE 7 # 12-44 (BUGA-VALLE)", "t": "3174118826", "i": "1144094339-8", "c": "BUGA (VALLE)"}, {"n": "ELIDYS MONCADA", "d": "CRA 13 # 17-40  (GRANADA-META)", "t": "3133306827", "i": "1065881827", "c": "GRANADA (META)"}, {"n": "ELIDYS MONCADA", "d": "CRA 13 # 17-40  (GRANADA-META)", "t": "3133306827", "i": "1056881827-0", "c": "GRANADA (META)"}, {"n": "ELISA", "d": "CALLE 10 Nº 8-87 (JAMUNDI)", "t": "5162979", "i": "900372499-9", "c": "JAMUNDI (VALLE)"}, {"n": "ELISA", "d": "CALLE 2B-CRA 94 A ESQUINA", "t": "3217822530", "i": "", "c": "BOGOTA"}, {"n": "ELIZABETH ZULUAGA", "d": "CALLE 5 # 3-08 (FACATATIVA)", "t": "3508147885", "i": "43260885-2", "c": "FACATATIVA (C/MARCA)"}, {"n": "ELKIN DAVID MURILLO", "d": "CRA 26 Nº 83-10 (CALI)", "t": "", "i": "1118286419-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ELMER ACEVEDO", "d": "CRA 66 # 60 A-26 SUR MADELENA", "t": "3223931521", "i": "", "c": "BOGOTA"}, {"n": "EMPERATRIZ RINCON", "d": "CRA 11 # 11-44 CENTRO (OCAÑA-NORTE DE SANTANDER)", "t": "3102755079", "i": "37326555-0", "c": "OCAÑA (SANTANDER)"}, {"n": "ENRIQUE CASTRO", "d": "CALLE 11 # 23-15 B.SAN NICOLAS PUERTO ASIS-PUTUMAYO", "t": "3108752418", "i": "", "c": "PUERTO ASIS (PUTUMAYO)"}, {"n": "ENRIQUE MARTINEZ GUTIERREZ", "d": "CALLE 33 F Nº 8A-03 IPIALES  (Altamira casa 315)", "t": "3005325060", "i": "79390715", "c": "IPIALES (NARIÑO)"}, {"n": "ENTRE BOMBOS Y PLATILLOS", "d": "CRA 12 Nº 72-34 (CALI)", "t": "", "i": "1143833497", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ERIKA TATIANA GONZALES", "d": "CRA 13 # 10-35 LOCAL 104-105  SAN VICTORINO", "t": "3044706736", "i": "", "c": "BOGOTA"}, {"n": "ESPINELA FIESTAS TEMATICAS", "d": "CALLE 6 # 9-02 B CENTRO (CERRITO-VALLE)", "t": "", "i": "1114815615-2", "c": "CERRITO (VALLE)"}, {"n": "ETICALI LTDA", "d": "CR. 26 Nº 29-86 (PALMIRA)", "t": "2707496", "i": "900221171-4", "c": "PALMIRA (VALLE)"}, {"n": "EUGENIO BUILLES", "d": "CRA 11 # 13-07  (VILLA GORGONA-VALLE)", "t": "", "i": "", "c": "VILLA GORGONA (CANDELARIA)"}, {"n": "EXPRESIONES Y ALGO MAS \"JAVIER CORAL\"", "d": "CALLE 4 # 11-33 (SANTANDER DE QUILICHAO)", "t": "3108218539", "i": "10482782", "c": "SANTANDER DE QUILICHAO"}, {"n": "FABIAN ANDRES GUERRERO", "d": "CALLE 48 L # 5C-23  BOCHICA SUR", "t": "3013118338", "i": "1013641080", "c": "BOGOTA"}, {"n": "FABIAN GOMEZ", "d": "CRA 9 Nº 13 A 28 LOC. 104", "t": "8891274", "i": "1144148753-8", "c": "BOGOTA"}, {"n": "FABIAN HERNANDEZ", "d": "", "t": "3016499981", "i": "", "c": "BOGOTA"}, {"n": "FABIAN MAHECHA", "d": "CRA 19 # 22-31 C.C EL SEMBRADOR LOCAL-76 (PALMIRA-VALLE)", "t": "3503509732", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "FABIAN RIAÑO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "FABIO BERNAL", "d": "AV 5 OESTE # 22-22 TERRON COLORADO (CALI)", "t": "3162516018", "i": "76327783", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FABIOLA HERRERA RUEDA", "d": "CRA 5 # 11-50  LOCAL 59 (CALI)", "t": "8858116", "i": "22173593-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FANNY BUU", "d": "", "t": "3132660530", "i": "35492057-7", "c": "BOGOTA"}, {"n": "FANNY SMITH MEZA  MEZA", "d": "CRA  23 C # 31 D-45 SUR", "t": "3158052125", "i": "1121880103-5", "c": "BOGOTA"}, {"n": "FANNY SMITH MEZA MEZA", "d": "CRA. 20  #  13-17  (YOPAL)", "t": "3158052125", "i": "1121880103-5", "c": "YOPAL (CASANARE)"}, {"n": "FANY SMITH MEZA MEZA", "d": "CALLE 9 # 16-45  (AGUA AZUL-CASANARE)", "t": "3158052125", "i": "1121880103-5", "c": "AGUA AZUL (CASANARE)"}, {"n": "FECHAS Y FIESTAS LINDAS", "d": "AV PEPE SIERRA Nº 26-31", "t": "7428940", "i": "800229072", "c": "BOGOTA"}, {"n": "FELIPE FERNANDEZ", "d": "BOSA LA LIBERTAD", "t": "3006878863", "i": "1031169483", "c": "BOGOTA"}, {"n": "FERMIN BUENO", "d": "CR. 9 Nº 13 A-40 LOCAL 120", "t": "8844181", "i": "", "c": "BOGOTA"}, {"n": "FERNANDO ARISTIZABAL", "d": "CRA 26 M # 73 B-75 MARROQUIN 2  (LOS MANGOS-CALI)", "t": "3137692820", "i": "70829816-7", "c": "LOS MANGOS (CALI)"}, {"n": "FERNANDO ARISTIZABAL", "d": "CRA  26 M  # 83-10  (CALI)", "t": "3137692820", "i": "70829816-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FERNANDO CAVANZO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "FERNANDO IZQUIERDO MONTAÑEZ \"BARGAIN\"", "d": "CALLE 11 # 9-31 PISO-2  (CALI-VALLE)", "t": "3162958072", "i": "1143824616-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FERNANDO MARIN SANCHEZ", "d": "CRA 9 # 11-43 (CALI-VALLE)", "t": "3183779558", "i": "10102536-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FERNANDO OBANDO", "d": "CALL 20 N 17-35 (ARMENIA)", "t": "7446022", "i": "9725999-7", "c": "ARMENIA (QUINDIO)"}, {"n": "FERNANDO QUITIAN", "d": "CALLE 5C  N 70-09", "t": "3193885013", "i": "", "c": "BOGOTA"}, {"n": "FERNANDO SILVA (CATEDRAL)", "d": "CR. 12 Nº 11-25", "t": "3185895024", "i": "79579713", "c": "BOGOTA"}, {"n": "FERNANDO SILVA (PONCE)", "d": "C.C. PONCE", "t": "3185895024", "i": "79579713", "c": "BOGOTA"}, {"n": "FERNANDO URREA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "FIESTA MAGICA (CALI)", "d": "CALLE 14 No 68 26 LA HACIENDA", "t": "4869970", "i": "", "c": "BOGOTA"}, {"n": "FIESTAS ARCOIRIS # 2", "d": "NORMANDIA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "FIESTAS ARCOIRIS # 3", "d": "BOSA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "FIESTAS ARCOIRIS # 4", "d": "SOACHA", "t": "", "i": "", "c": "SOACHA (C/MARCA)"}, {"n": "FIESTAS Y DETALLES LA 9", "d": "CALLE 11 # 8-57 CALI", "t": "3234812684", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FIESTAS Y DETALLES LA 9", "d": "CRA 9 # 11-23 CALI", "t": "3234812684", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FIESTAS Y EMPAQUES", "d": "CALLE 62 Nº 15-09-07", "t": "3206747356", "i": "901036265-9", "c": "BOGOTA"}, {"n": "FIESTAS Y MAS", "d": "PEREIRA", "t": "", "i": "", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "FIESTAS Y PIÑATAS PROMERCA", "d": "CALLE 11 # 20-53 (YOPAL)", "t": "3102875640", "i": "9528792-5", "c": "YOPAL (CASANARE)"}, {"n": "FRANCIA GOMEZ", "d": "CALLE 16  Nº 22-56  (PASTO)", "t": "3185890766", "i": "1085310039", "c": "PASTO (NARIÑO)"}, {"n": "FRANCIA LORENA GIRALDO", "d": "CRA 39 # 5 A -112 (CALI)", "t": "3135147959", "i": "1144166666-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "FRANCISCO JAVIER ALZATE", "d": "CALLE 30 # 31-32 CARMEN DEL VIBORAL", "t": "3012873226", "i": "", "c": "CARMEN DE VIBORAL"}, {"n": "FRANCISCO JAVIER ARISTIZABAL", "d": "CRA 49 # 47-36 (BELLO)", "t": "2516428", "i": "", "c": "BELLO (ANTIOQUIA)"}, {"n": "FREDY PARRALES SANCHEZ", "d": "CRA 71 # 1A-2-32 BLOQUE 158 ALCAZARES( CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "GABRIELA MELLIZO ERAZO", "d": "CALLE 7 A # 17-61 (POPAYAN)", "t": "3217835896", "i": "10617461296", "c": "POPAYAN (CAUCA)"}, {"n": "GALU TOYS # 2", "d": "CALLE 10 # 58-39 SANTA ANITA (CALI)", "t": "3174370408", "i": "901185193-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "GERALDINE BEJARANO", "d": "CRA 13 Nº 72-96 (CALI)", "t": "3148340750", "i": "1144199596-6", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "GERALDINE FUQUENE", "d": "CALLE 156 Nº 7 H-39  BARRANCAS", "t": "3123645880", "i": "", "c": "BARRANCAS (GUAJIRA)"}, {"n": "GERARDO GALEANO", "d": "CALLE 44 No 21-76", "t": "3123600535", "i": "", "c": "BOGOTA"}, {"n": "GILBERTO MARTINEZ", "d": "CALLE 42 # 30-34  (PALMIRA)", "t": "3146560545", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "GILSA DISTRIBUCIONES", "d": "CALLE 74 # 5-73 ( CALI)", "t": "8880710", "i": "900372199-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "GLOBOS FIESTAS Y MAS", "d": "CL 21 n° 7 -58 (pereira)", "t": "3344732", "i": "", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "GLORIA CECILIA FRANCO", "d": "CALLE 39 # 30 A-32 (VILLAVICENCIO)", "t": "3212306142", "i": "43787069-1", "c": "VILLAVICENCIO (META)"}, {"n": "GLORIA ELOY CASTAÑO (EL GANGAZO)", "d": "CALLE 100 # 16-35 CIUDAD DEL CAMPO (CALI)", "t": "3104334877", "i": "1054919876-6", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "GLORIA ESTELLA DAZA", "d": "CR. 12 Nº 11-27 LOCAL 106", "t": "2838534", "i": "", "c": "BOGOTA"}, {"n": "GLORIA NELLY BOTERO", "d": "CARRERA 75  No 23D-34", "t": "2634956", "i": "", "c": "BOGOTA"}, {"n": "GLORIA RESTREPO", "d": "CRA 52 A No 45 34 LOCAL 107", "t": "5114813", "i": "43635304-6", "c": "BOGOTA"}, {"n": "GONZALO MARULANDA", "d": "CALLE 13 # 8-23 (RIOACHA-GUAJIRA)", "t": "3106210852", "i": "98457224-1", "c": "RIOACHA (GUAJIRA)"}, {"n": "GRUPO AGATA SAS", "d": "CALLE 45 # 52 A-32 (MEDELLIN)", "t": "3217279425", "i": "", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "GUILLERMO VILLADA", "d": "CRA 23 #61-26 ( MANIZALES)", "t": "", "i": "", "c": "MANIZALES (CALDAS)"}, {"n": "HAPPY CHILDREN", "d": "CALLE 38 SUR # 87F-45(PATIO BONITO)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "HELEN ARIAS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "HELMER OSPINA", "d": "CALLE 13  # 4-81 CENTRO (CARTAGO-VALLE)", "t": "3185227309", "i": "16234093-8", "c": "CARTAGO (VALLE)"}, {"n": "HENRY FERNANDEZ (CALI)", "d": "CRA 30A No 7-36 Barrio San Fernando  Nuevo Cali", "t": "3207103220", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "HENRY PORTO GUERRA", "d": "TRANSV 74 A # 31-111  (CARTAGENA)", "t": "", "i": "", "c": "CARTAGENA (BOLIVAR)"}, {"n": "HERNAN SALINAS", "d": "CRA 6 Nº 23-70 BLOQUE 8 CASA 12 (funza)", "t": "3155810913", "i": "", "c": "FUNZA (C/MARCA)"}, {"n": "HERNER VELASCO", "d": "CRA 3 N° 6-60  (BOLIVAR CAUCA)", "t": "3146685684", "i": "1058967350", "c": "BOLIVAR (CAUCA)"}, {"n": "HORA LOCA", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "HORA LOCA  LA 7", "d": "CRA 7 Nº 13-35 CALI", "t": "8841112", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "HUGGIES CUAC", "d": "CALLE 38 # 86 C- 76  (PATIO BONITO)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "IMPORLIZ (LICETH ARISTIZABAL)", "d": "CRA. 8 Nº 16-19 (PEREIRA)", "t": "3258803", "i": "", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "IMPORTADORA DAXIMO", "d": "CRA  14 # 10-77  (ARMENIA)", "t": "3163668925", "i": "901171231", "c": "ARMENIA (QUINDIO)"}, {"n": "IMPORTADORA LEYMAR", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "INCOMER S.A.", "d": "CR. 5 Nº 36º-36 DELICIAS (CALI)", "t": "4424064 EXT 111", "i": "900123795-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "INGRID", "d": "CENTRO", "t": "3132159584", "i": "", "c": "BOGOTA"}, {"n": "INVERSIONES BOTERO Y BOTERO SAS", "d": "CALLE 9 #  9-20 LOCAL 109-110    (CALI)", "t": "8807110", "i": "903722199-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "INVERSIONES BOTERO Y BOTERO SAS", "d": "CALLE 10 Nº 8-87 (JAMUNDI)", "t": "5162979", "i": "900372199-7", "c": "JAMUNDI (VALLE)"}, {"n": "INVERSIONES GARNICA", "d": "CRA 18 # 19-30  (BOSCONIA-CESAR)", "t": "3135100198", "i": "", "c": "BOSCONIA (CESAR)"}, {"n": "INVERSIONES INVERTIR LGS SAS", "d": "CRA 44 # 35-12 BARRANQUILLA", "t": "3135100198", "i": "", "c": "BARRANQUILLA (ATLANTICO)"}, {"n": "INVERSIONES INVERTIR LGS SAS \"PALERIA FANTASY\"", "d": "CALLE 9 # 14-92 PLATO-MAGDALENA", "t": "3135100198", "i": "", "c": "PLATO (MAGDALENA)"}, {"n": "INVERSIONES VABEL", "d": "CALLE 37 # 79-29 (MEDELLIN)", "t": "3184151932", "i": "900824045", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "ISAAC RIVAS", "d": "BOGOTA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ISABEL HORA LOCA", "d": "CRA 7 Nº 13-35(CALI)", "t": "8841112", "i": "94544598-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ISIS LEONELA GARNICA", "d": "CRA 28 # 15 A-31 (MAICAO-GUAJIRA)", "t": "3135100198", "i": "", "c": "MAICAO (GUAJIRA)"}, {"n": "ISIS LEONELA GARNICA", "d": "CALLE 12 # 14-23 (MAICAO-GUAJIRA)", "t": "7254008", "i": "1123994783", "c": "MAICAO (GUAJIRA)"}, {"n": "JAEL HENNESAY GONZALES", "d": "CRA 17 # 33 B-21  (SANTA HELENA-VILLAVICENCIO)", "t": "3154881044", "i": "40418097-5", "c": "SANTA HELENA (VILLAVICENCIO)"}, {"n": "JAILER LOPEZ", "d": "CALLE 27 # 104-04  B. ORQUIDEAS  (CALI)", "t": "3176448077", "i": "70830019", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAIME ALONSO SERNA", "d": "CALLE 37 # 29-32 EDIFICIO ALCARAVAN PISO 3 (VILLAVICENCIO)", "t": "3124523861", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "JAIME CANO", "d": "JAMUNDI", "t": "", "i": "", "c": "JAMUNDI (VALLE)"}, {"n": "JAIME GAVIRIA VELEZ", "d": "CALLE 31 # 27-20 (CALI)", "t": "3104659629", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAIME JULIAN GALVIS", "d": "CRA 7  CALLE 19 G B.CENTRO  (PUERTO CARREÑO-VICHADA)", "t": "3167553686", "i": "1122648871-4", "c": "PUERTO CARREÑO (VICHADA)"}, {"n": "JAIME ROJAS PACHECO", "d": "CALLE 9 # 7-35  (BARBOSA-SANTANDER)", "t": "3144448000", "i": "91012265", "c": "BARBOSA (SANTANDER)"}, {"n": "JAIR DE JESUS GIRALDO LOPEZ", "d": "CRA 9 # 14-36 (CALI)", "t": "3134478847", "i": "16285801-4", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAIR DE JESUS GIRALDO LOPEZ", "d": "CALLE 30 Nº 25-34 LOCAL 1 (PALMIRA)", "t": "3103887108", "i": "16285801-4", "c": "PALMIRA (VALLE)"}, {"n": "JAIRO GOMEZ  (VENDABAL)", "d": "CALLE 14 No.7-24 CALI", "t": "8803344", "i": "8814402-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAIRO MARTINEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JANETH GIRALDO", "d": "CR. 8 Nº 14-28 LOCAL44(CALI)", "t": "", "i": "4379443-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAVIER CARDENAS", "d": "CR. 9 Nº 13A-28 LOCAL 132 C.C. TAIWAN CALI", "t": "8959826", "i": "70695476-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JAVIER RINCON", "d": "C.C. CATEDRAL", "t": "3204296748", "i": "", "c": "BOGOTA"}, {"n": "JAVIER STIVEN SERNA SARAZA \"KANUTO\"", "d": "CALLE 14 # 16-50 (UNION-VALLE)", "t": "3217736116", "i": "1038409426-0", "c": "UNION (VALLE)"}, {"n": "JAZMIN JARAMILLO", "d": "KRA 7  Nº 22-05 (NEIVA)", "t": "8635939", "i": "55166953-7", "c": "NEIVA (HUILA)"}, {"n": "JAZMIN JARAMILLO", "d": "CRA 47  Nº 43-51  2º PISO (CALI)", "t": "3285956", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JEAN CARLO ROJAS", "d": "CRA 29 # 72 Q-69 B.EL POBLADO (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JEFER REYES", "d": "AV 1 MAYO # 37-54", "t": "3123244696", "i": "1015466942", "c": "BOGOTA"}, {"n": "JEFERSON ALEXIS CASANOVA", "d": "CALLE 6 # 39-30 (CALI)", "t": "3182548024", "i": "1144108957-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JEIMY ANDREA AVILA PALOMINO", "d": "TRANSV 73 B # 62 B-11 SUR", "t": "3133598362", "i": "", "c": "BOGOTA"}, {"n": "JEIMY GONZALES", "d": "CALLE 17 # 16-40  (DUITAMA)", "t": "3142636355", "i": "51575275-1", "c": "DUITAMA (BOYACA)"}, {"n": "JENNIFER ORTEGA", "d": "CRA 6 # 26N-30(POPAYAN)", "t": "3207397179", "i": "", "c": "POPAYAN (CAUCA)"}, {"n": "JENNY JULIETH LOPEZ", "d": "CRA 101 # 45-90  (CALI)", "t": "3016323203", "i": "1130659091", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JENNY ROCIO YAYA GAVILAN", "d": "CALLE 10 # 6-23 PISO-1  (SIMIJACA-CUNDINAMARCA)", "t": "", "i": "", "c": "SIMIJACA (C/MARCA)"}, {"n": "JESICA NIEVES", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JESUS HERNANDEZ", "d": "CRA 79 # 40C-92 (BOGOTA)", "t": "3174094668", "i": "91072843", "c": "BOGOTA"}, {"n": "JESUS OCTAVIO MEJIA", "d": "CRA 5 # 10-89  CATEDRAL (CARTAGO-VALLE)", "t": "3117709400", "i": "70695408-8", "c": "CARTAGO (VALLE)"}, {"n": "JESUS OCTAVIO MEJIA", "d": "CALLE 13 # 4-70 PEATONAL  (CARTAGO-VALLE)", "t": "3117709400", "i": "70695408-8", "c": "CARTAGO (VALLE)"}, {"n": "JHON", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JHON ALEXANDER CASTRO", "d": "CRA 50 SUR # 10 G-10 SUPER INTER PISO -2 (CALI)", "t": "3105059141", "i": "16504901-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JHON ALEXANDER CASTRO", "d": "CRA 56 # 13 C-103 2 PISO SUPER INTER 1 DE MAYO (CALI)", "t": "3105059141", "i": "16504901-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JHON ARISTIZABAL", "d": "CALLE 39 # 29 A-87 (VILLAVICENCIO)", "t": "3114863885", "i": "70830756-5", "c": "VILLAVICENCIO (META)"}, {"n": "JHON EDUARDO CADENA", "d": "CRA 9 Nº 13A-40 LOCAL 145 (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JHON EDWIN SALAZAR JIMENEZ", "d": "CRA 6 # 7-02 (YUMBO-VALLE)", "t": "3148765818", "i": "6550099-1", "c": "YUMBO (VALLE)"}, {"n": "JHON FREDY CUARTAS", "d": "CALLE 4 # 11-53 (SANTANDER-QUILICHAO)", "t": "3106132495", "i": "70905634-9", "c": "SANTANDER DE QUILICHAO"}, {"n": "JHON FREDY IBAÑEZ", "d": "CLL 64 SUR  N 22 B 18 ( CANDELARIA )", "t": "3123239496", "i": "", "c": "CANDELARIA (VALLE)"}, {"n": "JHON JAMES GUZMAN DELGADO", "d": "VIA KM 30. EL CARMEN  DAGUA-VALLE", "t": "3122583433", "i": "6342964", "c": "DAGUA (VALLE)"}, {"n": "JHON NUÑEZ", "d": "CALLE 78 C # 45C-40", "t": "3209932658", "i": "", "c": "BOGOTA"}, {"n": "JHON RICO \"SUPER NOVA KIDS", "d": "CRA 4 # 186 A-13", "t": "3107772211", "i": "", "c": "BOGOTA"}, {"n": "JHON SEBASTIAN ALZATE", "d": "CRA 29 N° 32-09 (CALI)", "t": "3045398960", "i": "10828885159", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JIMENA SALAZAR", "d": "CALLE 63 SUR 3 # 72-46  PERDOMO", "t": "3142525637", "i": "", "c": "BOGOTA"}, {"n": "JOHANA  JIMENEZ", "d": "CALLE 66 # 18 M 67 SUR", "t": "3103026392", "i": "", "c": "BOGOTA"}, {"n": "JOHANA BUITRAGO", "d": "CALLE 61 A # 96-42 CASA 15 MANZANA 36 (BOSA ATALAYAS)", "t": "3057128495", "i": "", "c": "BOGOTA"}, {"n": "JOHANA MONTOYA", "d": "CRA 17 # 9-07 B.PUERTO NUEVO  (FLONDA-VALLE)", "t": "3187948458", "i": "43655316", "c": "FLONDA (VALLE)"}, {"n": "JOHANA MORALES TABARES", "d": "CRA 23 # 24-32 CENTRO (TULUA-VALLE)", "t": "3218496786", "i": "1116263733", "c": "TULUA (VALLE)"}, {"n": "JOHANA MOSCOSO MONTENEGRO", "d": "CALLE 44  #38-55  (VILLAVICENCIO)", "t": "3115113375", "i": "40341530-0", "c": "VILLAVICENCIO (META)"}, {"n": "JOHANA VALENCIA CONTO", "d": "CALLE 71 # 1 A 5-11 (CALI)", "t": "3175665782", "i": "1144049026-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JOHANA VILLANUEVA VARGAS", "d": "CALLE 4 # 5-112 ESQUINA B.CENTENARIO (YOTOCO-VALLE)", "t": "3183345016", "i": "111245037", "c": "YOTOCO (VALLE)"}, {"n": "JOHANY LOPEZ", "d": "CRA 9 # 13-42  (CALI)", "t": "3206709286", "i": "1118298021-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JORGE", "d": "SAN VICTORINO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JORGE AGUIRRE", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JORGE CASTAÑO", "d": "", "t": "3204159543", "i": "", "c": "BOGOTA"}, {"n": "JORGE LUIS MOGOLLON", "d": "CALLE 9 # 5-63  (PAMPLONA-SANTANDER)", "t": "", "i": "", "c": "PAMPLONA (SANTANDER)"}, {"n": "JORGE PIRAGAUTA", "d": "CLL 78 No 69 K 35", "t": "6300222", "i": "", "c": "BOGOTA"}, {"n": "JORGE VASQUEZ", "d": "CRA 34 A # 93 B-SUR 97 B. PATIO BONITO", "t": "3144767549", "i": "", "c": "BOGOTA"}, {"n": "JOSE ANCIZAR HENAO MUÑOZ", "d": "CALLE 10 # 7-47  (CHINCHINA-CALDAS)", "t": "3127916985", "i": "75143325-5", "c": "CHINCHINA (CALDAS)"}, {"n": "JOSE ANGEL ROSERO DURAN", "d": "CRA 10 # 13-67  (SAN GIL-SANTANDER)", "t": "3187174221", "i": "41268947", "c": "SAN GIL (SANTANDER)"}, {"n": "JOSE HENRY  RAMIREZ OCAMPO \"HYD\"", "d": "CRA 7 # 8-30 (ROLDANILLO-VALLE)", "t": "3206762444", "i": "70697682", "c": "ROLDANILLO (VALLE)"}, {"n": "JOSE HENRY  RAMIREZ OCAMPO \"TRAKY\"", "d": "CRA 4 # 6-53 B.BELALCAZAR (YUMBO-VALLE)", "t": "3206762444", "i": "70697682", "c": "YUMBO (VALLE)"}, {"n": "JOSE HENRY  RAMIREZ OCAMPO \"YUANCITY\"", "d": "CAR 26 # 27-60 (TULUA-VALLE)", "t": "3206762444", "i": "70697682", "c": "TULUA (VALLE)"}, {"n": "JOSE HENRY RAMIREZ", "d": "CRA 26 # 27-60 ZONA BANCARIA  (TULUA-VALLE)", "t": "3206762444", "i": "70697682-9", "c": "TULUA (VALLE)"}, {"n": "JOSE IGNACIO VARGAS", "d": "CARRERA 14 # 7-61 LA PIÑATERIA  (CIRCACIA-QUINDIO)", "t": "3163550411-3182898331", "i": "80052285", "c": "CIRCACIA (QUINDIO)"}, {"n": "JOSE ORLANDO RUIZ", "d": "CRA 51 # 129-60  (PRADO VERANIEGO)", "t": "3178522541", "i": "19402157-2", "c": "BOGOTA"}, {"n": "JOSE PARRA", "d": "CR. 12 Nº 11-80", "t": "2810575", "i": "52293767-6", "c": "BOGOTA"}, {"n": "JOSE PARRA 2", "d": "CALLE 11 Nº 11-46 LOCAL 215", "t": "2810575", "i": "", "c": "BOGOTA"}, {"n": "JOSE RAMIREZ", "d": "CALLE 8 SUR Nº 32A-04 (BOGOTA)", "t": "3102850682", "i": "17154454", "c": "BOGOTA"}, {"n": "JOSE VILLEGAS", "d": "CRA 2 # 23C-01 VILLA RECREO (PASTO)", "t": "3167585261", "i": "14637087-6", "c": "PASTO (NARIÑO)"}, {"n": "JOSE YESID MORENO SARMIENTO", "d": "CRA 5 Nº 12-31 (la dorada)", "t": "", "i": "", "c": "LA DORADA ( CALDAS)"}, {"n": "JUAN CARLOS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JUAN CARLOS CETINA", "d": "CRA 11 A Nº 42B-88", "t": "3203619763", "i": "1032361376-1", "c": "BOGOTA"}, {"n": "JUAN CARLOS DIAZ", "d": "CALLE 6A # 17-36 (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JUAN CARLOS GIRALDO", "d": "C.C, SAN JOSE", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JUAN EDUARDO VACCA RINCON", "d": "CRA 11 # 10-56 CENTRO (OCAÑA-NORTE DE SANTANDER)", "t": "3156496268", "i": "1007953843-8", "c": "OCAÑA (SANTANDER)"}, {"n": "JUAN FELIPE CANIZALES", "d": "CR. 8 Nº 11-52", "t": "3168334310", "i": "1015416604-4", "c": "BOGOTA"}, {"n": "JUAN MORALES", "d": "CLL. 7ª- Nº 13-47 (VALLEDUPAR)", "t": "3106059747", "i": "", "c": "VALLEDUPAR (CESAR)"}, {"n": "JUAN OSORIO ZULUAGA", "d": "CRA 15 # 15-20 (UNION-VALLE)", "t": "3174816228", "i": "1113789447-6", "c": "UNION (VALLE)"}, {"n": "JUAN PABLO DUQUE DUQUE", "d": "CRA 10 # 1-205 B.PILOTO (JAMUNDI-VALLE)", "t": "3136866311", "i": "70906154-1", "c": "JAMUNDI (VALLE)"}, {"n": "JUAN PABLO DUQUE DUQUE", "d": "CLL 82# 22- 05 (CALI)", "t": "3136866311", "i": "70906154-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JUAN PABLO SALAZAR", "d": "CRA 9 #11-50 PISO 2 LOCAL 18 A (CALI)", "t": "3039250727", "i": "1107103275-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JUAN SEBASTIAN MORALES", "d": "CRA 8 # 17-84  (CALI)", "t": "3206822147", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JUGUETELANDIA(LUIS ANGEL ARISTIZABAL)", "d": "CLL.9 Nº 29A-25 CALI", "t": "5140907", "i": "10879007-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "JULIAN ENRIQUE MUÑOZ PEÑA", "d": "CALLE 18 # 9-69  LOCAL  104  (CHIQUINQUIRA)", "t": "3105720864", "i": "1053346497", "c": "CHIQUINQUIRA (BOYACA)"}, {"n": "JULIAN JAVIER RODRIGUEZ", "d": "CALLE  6 # 6-30 (PAMPLONA-SANTANDER)", "t": "3142156173", "i": "", "c": "PAMPLONA (SANTANDER)"}, {"n": "JULIANA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "JULIANA GARCIA CARDENAS", "d": "CALLE 17 # 50 A-33  2 PISO B. PABLO SEXTO (MEDELLIN)", "t": "3015079613", "i": "1020487217", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "JULIANA RIVERA", "d": "CRA 25 # 29-65 (PALMIRA)", "t": "3234528998", "i": "1005895888-2", "c": "PALMIRA (VALLE)"}, {"n": "JULIANA VILLAMIZAR", "d": "CRA 11 # 17-15 CHIA", "t": "3176646664", "i": "1020796765", "c": "CHIA (C/MARCA)"}, {"n": "JULIO CESAR AMAYA", "d": "CRA 78 B No 38 - 80 Kennedy", "t": "4038821", "i": "", "c": "BOGOTA"}, {"n": "JULIO CESAR GORDILLO", "d": "CRA 6 # 7-17  (SAN MARTIN-META)", "t": "3152578737", "i": "79971459-1", "c": "SAN MARTIN (META)"}, {"n": "k\"ATIELA  SHOP", "d": "DIAG 44 B # 22 A-19 SUR", "t": "3192288616", "i": "", "c": "BOGOTA"}, {"n": "KAREN CARILLO", "d": "CALLE 11 A # 73 A-16 VILLA ALSACIA", "t": "3004034798", "i": "1014208690", "c": "BOGOTA"}, {"n": "KAREN MELISA", "d": "CR. 13 Nº 11-63", "t": "2828126", "i": "", "c": "BOGOTA"}, {"n": "KAREN PALACIOS", "d": "CALLE 18 # 18-65 B.ANTONIO NARIÑO  (PUERTO TEJADA)", "t": "3137261402", "i": "1062295146", "c": "PUERTO TEJADA (CAUCA)"}, {"n": "KARENCARILLO", "d": "ALAMOS", "t": "3004034798", "i": "1014208690", "c": "BOGOTA"}, {"n": "KARINA OSTOS", "d": "VILLAS DE GRANADA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "KAROL GIRALDO (MUNDO REGALO)", "d": "CALLE 33 A # 11 C-43  (CALI)", "t": "3174173314", "i": "66995956-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "KATERINE DIAZ", "d": "CALLE 129D Nº 106-04  (SUBA-AURES)", "t": "3227794021", "i": "1019131679", "c": "BOGOTA"}, {"n": "KATERINE DIAZ", "d": "CARRERA 111B # 136-51 (SUBA-TIBABUYES)", "t": "3223596561", "i": "", "c": "BOGOTA"}, {"n": "KATHERINE GIRALDO DIAZ", "d": "Oficina carrera 7 # 17-01 oficina 743", "t": "3002863667", "i": "1053792824", "c": "BOGOTA"}, {"n": "KELLY ASTUDILLO", "d": "CRA 9 No 5 75 (POPAYAN)", "t": "8393638", "i": "34562398-5", "c": "POPAYAN (CAUCA)"}, {"n": "KELLY RAMIREZ", "d": "(CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LA CALI S.A.S", "d": "CRA 21 # 15-68 CENTRO (PASTO-NARIÑO)", "t": "3016634905", "i": "800220247-8", "c": "PASTO (NARIÑO)"}, {"n": "LA CASA DE LA PIÑATA 1", "d": "CRA 28 N° 30-69 (PALMIRA)", "t": "2867466", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "LA CASA DE LA PIÑATA 2", "d": "CALLE 31 Nº 28-48 (PALMIRA)", "t": "2864663", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "LA FERIA DEL CACHARRO", "d": "CALLE 39 No.30-24 VILLAVICENCIO", "t": "6604464", "i": "79103947", "c": "VILLAVICENCIO (META)"}, {"n": "LA GRAN FARRA", "d": "CRA 13 # 11-65 2-PISO CENTRO", "t": "3104833120", "i": "", "c": "BOGOTA"}, {"n": "LA GRAN FARRA STELLAR", "d": "CAR 13 # 10-88  LOCAL 123 CENTRO", "t": "3104833120", "i": "53050098-8", "c": "BOGOTA"}, {"n": "LA MAGIA DE DISNEY", "d": "CRA 9 ESTE # 31-08  (SAN MATEO)", "t": "3108602836", "i": "", "c": "SAN MATEO (C/MARCA)"}, {"n": "LA REGALIA DE SILOE", "d": "DIAGONAL 51 OESTE # 3-02 (CALI)", "t": "5528157", "i": "79621487-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LANTO DUQUE", "d": "", "t": "3114675116", "i": "", "c": "BOGOTA"}, {"n": "LAURA BOTERO VILLADA", "d": "CRA 23 # 61-26 PISO-2 (MANIZALEZ)", "t": "", "i": "8862774", "c": "MANIZALES (CALDAS)"}, {"n": "LAURA VILLADA BOTERO", "d": "CRA 23 # 61-26  2 PISO  (MANIZALES-CALDAS)", "t": "3136111303", "i": "700501657-2", "c": "MANIZALES (CALDAS)"}, {"n": "LEDIS CONTRERAS", "d": "CALLE 58K No 78N-33", "t": "3175769919", "i": "", "c": "BOGOTA"}, {"n": "LEIDY", "d": "CRA 17# 13-15", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LEIDY DIAZ", "d": "CALLE 62 B # 1 A9-275 B.CHIMICESCA (CALI)", "t": "3178175686", "i": "1144069428-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LEIDY JOHANA REYES", "d": "CRA 17 # 13-15  (DUITAMA)", "t": "3008406603", "i": "", "c": "DUITAMA (BOYACA)"}, {"n": "LEIDY JOHANA SANCHEZ MIRA", "d": "CALLE 8 # 12-68 (BUGA-VALLE)", "t": "3168003965", "i": "1115080335-2", "c": "BUGA (VALLE)"}, {"n": "LEIDY JOHANA URBANO", "d": "CALLE 4 NORTE # 67 N-29 (CALI)", "t": "3133180111", "i": "38611997-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LEIDY MARIN", "d": "CRA 14 #18-17 (GRANADA-META)", "t": "3212935878", "i": "1122122726-6", "c": "GRANADA (META)"}, {"n": "LEIDY MENDEZ", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LEIDY NATALIA GARCIA", "d": "CALLE 11 Nº 3-85 (SANT. DE QUILICHAO)", "t": "", "i": "1038414196-1", "c": "SANTANDER DE QUILICHAO"}, {"n": "LEIDY QUEVEDO", "d": "CRA 5 # 8-16 (CHOCONTA-CUNDINAMARCA)", "t": "3155081162", "i": "", "c": "CHOCONTA (C/MARCA)"}, {"n": "LEIDY RENDON", "d": "CRA 38  # 8A-19  SAN ANDRESITO 38", "t": "3222100909", "i": "", "c": "BOGOTA"}, {"n": "LEIDY REYES", "d": "CRA 17 #13-15", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LEIDY RUIZ", "d": "CRA 61 Nº 2-66 (Buenaventura)", "t": "", "i": "", "c": "BUENAVENTURA (VALLE)"}, {"n": "LEONARDO GARCIA", "d": "CALLE 12 # 14-29 (MAICAO)", "t": "7250134", "i": "", "c": "MAICAO (GUAJIRA)"}, {"n": "LEONEL SUAREZ", "d": "CRA 11 SUR # 8-18", "t": "3108738848", "i": "", "c": "BOGOTA"}, {"n": "LIBARDO DUQUE (EL PALACIO DEL MANY)", "d": "CR. 9 Nº 12-65 CENTRO (CALI)", "t": "8854364", "i": "16697606-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LIBARDO RAMIREZ", "d": "CR. 7 Nº 14-60 CENTRO (CALI)", "t": "8894213", "i": "70693443-7", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LIGIA MARIBEL MARIN", "d": "CALLE 15  #16-74 CENTRO (ACACIAS)", "t": "3142121149", "i": "1121862486-4", "c": "ACACIAS (META)"}, {"n": "LILIANA AMAYA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LILIANA BLANDON", "d": "TRANSV 77 H  # 71 B-47 SUR (J.MARIA CARBONEL II SECTOR)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LILIANA MARCELA CETINA", "d": "CRA 11A Nº 42B-88 SUR", "t": "3112362188", "i": "1023885724-6", "c": "BOGOTA"}, {"n": "LILIANA MARIA RESTREPO CARDONA \"TRAKY\"", "d": "CALLE 4 # 8-64 CALLE LOS TUBOS (BUENAVENTURA-VALLE)", "t": "3176690437", "i": "30373995-2", "c": "BUENAVENTURA (VALLE)"}, {"n": "LILIANA MARIA RESTREPO CARDONA \"TRAKY\"", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LILIANA MARIA RESTREPO CARDONA \"YUANCITY\"", "d": "CALLE 10 # 4-25 (CARTAGO-VALLE)", "t": "3176690437", "i": "30373995-2", "c": "CARTAGO (VALLE)"}, {"n": "LILIANA OSPINA", "d": "CR. 100 Nº 18-59 LOCAL 131", "t": "", "i": "52.260.321-3", "c": "BOGOTA"}, {"n": "LILIANA ROCHA", "d": "AV. 30 Nº 3ª-72 LOCAL 110 SAN MATEO", "t": "7327488", "i": "520988797", "c": "SAN MATEO (C/MARCA)"}, {"n": "LILIANA URIBE", "d": "CRA 7A # 140 - 14 LOCAL 109", "t": "3007858143", "i": "", "c": "BOGOTA"}, {"n": "LILIANA URIBE", "d": "CRA 7 A # 140-14  LOCAL 109 (CEDRITOS)", "t": "3007858143", "i": "31992474", "c": "BOGOTA"}, {"n": "LILIBETH SANJUAN DURAN", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LINA ANDRADE", "d": "CALLE 6 Nº 9-10 cerrito valle (CALI)", "t": "3165770053", "i": "1114815615-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LINA MARCELA OLAYA", "d": "CRA  6 #  13-27  CENTRO  (DORADA-CALDAS)", "t": "3206437341", "i": "10184241-4", "c": "LA DORADA ( CALDAS)"}, {"n": "LINA MARIA RODRIGUEZ", "d": "CALLE 71 # 1 A-232 ALCAZARES (CALI)", "t": "3116556563", "i": "38554092-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LINA MARIA SANCHEZ MIRA", "d": "CALLE 8 # 11-67 (CERRITO-VALLE )", "t": "3104984649", "i": "1115084778-1", "c": "CERRITO (VALLE)"}, {"n": "LINA PAOLA CASTRO ALVAREZ", "d": "AV LAS PALMAS # 5-05 (FUSAGASUGA)", "t": "3214466958", "i": "1069737070", "c": "FUSAGASUGA (C/MARCA)"}, {"n": "LINA SANCHEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LIZETH NORED REYES BONILLA", "d": "CRA 36 #10 B-22 (ACACIAS-META)", "t": "3114766709", "i": "1122129042", "c": "ACACIAS (META)"}, {"n": "LIZETH RODRIGUEZ", "d": "CRA 7 # 6-77 B CENTRO (PUENTE NACIONAL) SANTANDER", "t": "3115689835", "i": "", "c": "PUENTE NACIONAL (SANTANDER)"}, {"n": "LIZETH SANCHEZ PARRA", "d": "CRA 7 U BIS # 61-13 ( CALI)", "t": "3163778401", "i": "38557617", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LORENA LOPEZ", "d": "LA UNION (NARIÑO)", "t": "", "i": "", "c": "LA UNION (NARIÑO)"}, {"n": "LORENA LOPEZ", "d": "MANZ-9 CASA-15 (EL POBLADO CAMPESTRE-VALLE)", "t": "3148797667", "i": "1113521072-7", "c": "EL POBLADO (VALLE)"}, {"n": "LORENA PERDOMO", "d": "CALLE 23 # 18-12 (PALMIRA-VALLE)", "t": "3127584404", "i": "67002088", "c": "PALMIRA (VALLE)"}, {"n": "LORENA SUAREZ", "d": "CRA  11 # 20-49 (TUNJA)", "t": "3118931350", "i": "", "c": "TUNJA (BOYACA)"}, {"n": "LOVE VARIEDADES", "d": "DIAG 52 SUR # 25-19", "t": "3132964380", "i": "", "c": "BOGOTA"}, {"n": "LUCY SOTO", "d": "CRA 6 # 8-22 CENTRO (HORMIGA-PUTUMAYO)", "t": "3186297516", "i": "", "c": "LA HORMIGA (PUTUMAYO)"}, {"n": "LUIS ADRIAN RIOS", "d": "CALLE 21 No 17-53 (ARMENIA)", "t": "7440798", "i": "9725623-3", "c": "ARMENIA (QUINDIO)"}, {"n": "LUIS ALBERTO GOMEZ", "d": "Calle 16 # 13 - 29 (FLORENCIA)", "t": "4348252", "i": "70692698-3", "c": "FLORENCIA (CAQUETA)"}, {"n": "LUIS ARMANDO BOCANEGRA CASTRO", "d": "CALLE 25 # 25A-40( VILLAVICENCIO)", "t": "", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "LUIS CARLOS SALAZAR", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LUIS FRANCISCO HERRERA", "d": "CR. 32 Nº 20-27 LOCAL 17 C.C. CAÑABERAL ( PALMIRA)", "t": "3187815668", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "LUIS GOMEZ", "d": "BOGOTA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LUIS MORENO", "d": "BOGOTA", "t": "3192391533", "i": "", "c": "BOGOTA"}, {"n": "LUISA MUÑOZ", "d": "CALLE 38 SUR # 87 H -65 (PATIO BONITO )", "t": "3132690339", "i": "", "c": "BOGOTA"}, {"n": "LUZ ARISTIZABAL", "d": "CALLE 11 No 9-34", "t": "3215857513", "i": "", "c": "BOGOTA"}, {"n": "LUZ DARY MOLINA", "d": "CALLE 37  # 43 A-56 TORRE 4-APTO 1005 (BELLO-ANTIOQUIA)", "t": "3005930610", "i": "65777077", "c": "BELLO (ANTIOQUIA)"}, {"n": "LUZ DARY NIÑO", "d": "CR. 31 Nº 51-15 CALI", "t": "3103875846", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "LUZ ELVIA LOPEZ", "d": "CALLE 30# 7-43 ESTE SAN MATEO", "t": "3114454825", "i": "", "c": "SAN MATEO (C/MARCA)"}, {"n": "LUZ ELVIRA PINILLA", "d": "CALLE 8 SUR No 70-71", "t": "3142982654", "i": "", "c": "BOGOTA"}, {"n": "LUZ FAY PERALTA", "d": "CALLE 6 # 6-38 NEIVA", "t": "3153494681", "i": "36156445-3", "c": "NEIVA (HUILA)"}, {"n": "LUZ HELENA  PULIDO PUERTA", "d": "CRA 48 MZ-10 CASA-5 B.ACACIAS  (ARMENIA-QUINDIO)", "t": "3146103478", "i": "31875117", "c": "ARMENIA (QUINDIO)"}, {"n": "LUZ MARIBEL RODRIGUEZ", "d": "TRASVERSAL 78A - DIAG. 70D SUR", "t": "3223056879", "i": "", "c": "BOGOTA"}, {"n": "LUZ MERY DAZA", "d": "CRA 12 No 11-27 ENTRADA 2 LC 106", "t": "2838534", "i": "51945526-3", "c": "BOGOTA"}, {"n": "LUZ MERY JOYA MORALES", "d": "CR.13 nº 10-98 2º PISO ESQUINA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "LUZ STELLA PINEDA", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MAGDA GUTIERREZ", "d": "CALLE 4 # 6-27  LOCAL 4 (VILLETA-CUNDIMARCA)", "t": "3013464493", "i": "1070944896", "c": "VILLETA (C/MARCA)"}, {"n": "MAGDALENA CASTAÑO NEIRA", "d": "CRA 14 # 17-87 (GRANADA META)", "t": "3103433345", "i": "30004570-4", "c": "GRANADA (META)"}, {"n": "MAGDY TATIANA MEDINA", "d": "CRA 10 A # 10-39 (PAZ DE ARIPOLO)", "t": "3232468188", "i": "", "c": "PAZ DE ARIPORO (CASANARE)"}, {"n": "MAGICOSAS", "d": "CALLE 129 # 52-12   PISO-2", "t": "3122459755", "i": "1032452647-1", "c": "BOGOTA"}, {"n": "MAIRA ALEJANDRA PALACIOS", "d": "CALLE 18 # 18-65 (PUERTO TEJADA)", "t": "3207517539", "i": "", "c": "PUERTO TEJADA (CAUCA)"}, {"n": "MAIRA ALEXANDRA  CORREA", "d": "CALLE 37 # 27-85 (VILLAVICENCIO)", "t": "3216548620", "i": "37395052-2", "c": "VILLAVICENCIO (META)"}, {"n": "MAITHE", "d": "CRA 75 Nº 23D-34 (BOGOTA)", "t": "2634956", "i": "", "c": "BOGOTA"}, {"n": "MANUEL FERNANDO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARCELA COBOS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARCELA MORENO", "d": "MOLINOS", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARCELA SOLARTE DELGADO", "d": "CRA 4 # 5-23 B.ORIENTAL  (SAMANIEGO-NARIÑO)", "t": "3125525727", "i": "59396250", "c": "SAMANIEGO (NATIÑO)"}, {"n": "MARCIA ANDREA ORTEGA", "d": "CL 4 Nª 7 - 18 ANAIME", "t": "3146202738", "i": "66657372", "c": "ANAIME (TOLIMA)"}, {"n": "MARCO ANDRES MARTINEZ", "d": "CALLE 26 # 23-40 (TULUA-VALLE)", "t": "3213227520", "i": "1022988024", "c": "TULUA (VALLE)"}, {"n": "MARCOS MARTINEZ PARRA(Mega party)", "d": "CRA  47 #  73-13", "t": "3145338380", "i": "", "c": "BOGOTA"}, {"n": "MARCOS MARTINEZ PARRA(Mercado de la piñata)", "d": "CRA 43 # 32-72 (BARRANQUILLA)", "t": "3145338380", "i": "", "c": "BARRANQUILLA (ATLANTICO)"}, {"n": "MARCOS MARTINEZ PARRA(Parranda y fiesta)", "d": "CRA 43 # 32-72 (BARRANQUILLA)", "t": "3145338380", "i": "", "c": "BARRANQUILLA (ATLANTICO)"}, {"n": "MARGARITA YUNTA", "d": "CR. 19 Nº 53-10", "t": "2120709", "i": "", "c": "BOGOTA"}, {"n": "MARIA ALEJADRA ORTIZ", "d": "AVENIDA GRAVINAL # 64 MANZANA 2-PARRALES (IBAGUE)", "t": "3187607270", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "MARIA ALEJANDRA OROZCO", "d": "CALLE 16 # 22 A-40 B.CENTRO (PASTO-NARIÑO)", "t": "3188224825", "i": "24605554-3", "c": "PASTO (NARIÑO)"}, {"n": "MARIA ALEJANDRA RINCON", "d": "CALLE 71 SUR # 92-46 TEKOA 4-BLOQUE 1 CASA 3 (BOSA RECREO)", "t": "3224616748", "i": "", "c": "BOGOTA"}, {"n": "MARIA CORREA", "d": "KR 77 A N 69 -71 (SANTA HELENA )", "t": "3203965670", "i": "", "c": "BOGOTA"}, {"n": "MARIA DEL CARMEN SOLARTE", "d": "CRA 4 # 5-23 B.EL ORIENTE (SAMAMNIEGO-NARIÑO)", "t": "3214187978", "i": "59396250", "c": "SAMANIEGO (NATIÑO)"}, {"n": "MARIA DEL PILAR FUERTES", "d": "CARRERA 8 No 32A-06", "t": "3123124904", "i": "", "c": "BOGOTA"}, {"n": "MARIA ELVIRA RUBIANO FERNANDEZ", "d": "TUNAL", "t": "", "i": "1013583631", "c": "BOGOTA"}, {"n": "MARIA EUGENIA OCAMPO", "d": "CRR 24 No 30-82", "t": "2756513", "i": "66774606-4", "c": "BOGOTA"}, {"n": "MARIA INES LEAL", "d": "CLL. 67 SUR Nº 78L - 17", "t": "7192422", "i": "", "c": "BOGOTA"}, {"n": "MARIA ISABEL MARIN", "d": "CR. 9 Nº 10-109 CENTRO (CALI)", "t": "8821042", "i": "1130622627", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARIA ISABEL SILVA", "d": "CALLE 8 # 11-75 (BUGA)", "t": "3166704263", "i": "388740965", "c": "BUGA (VALLE)"}, {"n": "MARIA LUCERO VARGAS GOMEZ", "d": "CALLE 20 # 20-73 (TRUJILLO-VALLE)", "t": "3117130787", "i": "29898026-0", "c": "TRUJILLO (VALLE)"}, {"n": "MARIA LUISA SOTO", "d": "CALLE 11 # 19-42 CENTRO (PTO ASIS-PUTUMAYO)", "t": "3212248372", "i": "", "c": "PUERTO ASIS (PUTUMAYO)"}, {"n": "MARIA MAGDALENA HOYOS \"VARIEDADES ANGIE \"", "d": "CRA 32 # 14-26 B.CRISTOBAL COLON (CALI)", "t": "3173541145", "i": "31478155-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARIA MERCEDES PASMIÑO", "d": "MANZANA 1-CASA 27 B. COLINA DEL NORTE (IPIALES-NARIÑO)", "t": "3173403984", "i": "36861429", "c": "IPIALES (NARIÑO)"}, {"n": "MARIA MERCEDES PRETEL GUERRA", "d": "CRA 13 # 10-04 (VILLA NUEVA-CASANARE)", "t": "3203501887", "i": "50876281-4", "c": "VILLA NUEVA (CASANARE)"}, {"n": "MARIA NIDIA UBAQUE ALONSO", "d": "CALLE 25 # 15 A-57  (VILLAVICENCIO)", "t": "3112409968", "i": "40218599", "c": "VILLAVICENCIO (META)"}, {"n": "MARIA RINCON VILLAMIZAR", "d": "CALLE 23 # 20-24  (ARAUCA-ARAUCA)", "t": "3157694200", "i": "", "c": "ARAUCA (ARAUCA)"}, {"n": "MARIA RUTH CALDERON", "d": "CLL.16 Nº 3-34 (IBAGUE)", "t": "2639898", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "MARIA SOLEYDA LONDOÑO", "d": "CALLE 15 # 63-01 UNID RESIDENCIAL  EL LIMONAR  ETAPA B APT-402 BLOQUE 46", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARIA ZAPATA", "d": "CLLE 8 No. 12-36 BUGA", "t": "", "i": "", "c": "BUGA (VALLE)"}, {"n": "MARIBEL", "d": "CENTRO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARIBEL SOTO", "d": "CALLE 1 A OESTE # 70-64  (CALI)", "t": "3236039", "i": "1130637637-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARIO ARISTIZABAL (EL SURTIDOR)", "d": "PIÑATERIA EL SURTIDOR", "t": "3421424", "i": "", "c": "BOGOTA"}, {"n": "MARIO CASTILLO", "d": "CR. 9A Nº 11-23 (CALI)", "t": "3207103220", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARISOL CIFUENTES", "d": "STA LIBRADA", "t": "3224244885", "i": "", "c": "BOGOTA"}, {"n": "MARISOL NUÑEZ", "d": "CALLE 46 Nº 81H-20", "t": "4534700", "i": "", "c": "BOGOTA"}, {"n": "MARISOL RENDON YEPES", "d": "CLL 9 Nº 30-44 (CALI)", "t": "5587878", "i": "39444785-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARITZA SILVA", "d": "CALLE 13 No 43-86 SEGUNDO PISO   CALI", "t": "3015649968", "i": "66903867-4", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MARLENY CORREA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MARTA LILIANA ESPINOSA", "d": "CRA.16Nº 21-21 (ARMENIA)", "t": "7413882", "i": "", "c": "ARMENIA (QUINDIO)"}, {"n": "MARTA LUCIA BELLO RUIZ", "d": "CLL. 11 Nº 11-30 LOCAL 211", "t": "3142038081-7848594", "i": "", "c": "BOGOTA"}, {"n": "MARTA RAMIREZ", "d": "CRA 7 N° 6-16 SUR TORRE 19 AP 203 (BOGOTA)", "t": "3102788840", "i": "", "c": "BOGOTA"}, {"n": "MARTA YOLANDA QUIÑONES", "d": "", "t": "3142156173", "i": "", "c": "BOGOTA"}, {"n": "MARY LUZ RIAÑO", "d": "", "t": "3105866378", "i": "", "c": "BOGOTA"}, {"n": "MARY RODRIGUEZ  (CENTRIPLAS)", "d": "CRA 18  # 12-16  (PLAZA ESPAÑA)", "t": "4091721", "i": "39526175", "c": "BOGOTA"}, {"n": "MAURICIO CARVAJAL  (PIÑATAS Y PELUCHES)", "d": "CRA 10 # 6-11  (ZIPAQUIRA)", "t": "3155469907", "i": "910759982-0", "c": "ZIPAQUIRA (C/MARCA)"}, {"n": "MAURICIO ORTEGA", "d": "CRA 56 # 2-10 B.GALAN", "t": "3007909416", "i": "", "c": "BOGOTA"}, {"n": "MAXIMO RODRIGUEZ", "d": "CR. 12ª Nº 10-67", "t": "3114451335", "i": "", "c": "BOGOTA"}, {"n": "MAYERLIS PIÑA MONTESINO", "d": "CALLE 33 N 4-40 ( SAN MATEO)", "t": "3165413214", "i": "", "c": "SAN MATEO (C/MARCA)"}, {"n": "MAYERLY BOHORQUEZ MENDEZ", "d": "CALLE 5 # 9-30 (PUERTO RICO-CAQUETA)", "t": "3217534766", "i": "", "c": "PUERTO RICO (CAQUETA)"}, {"n": "MAYORISTAS", "d": "CALLE 21 Nº 8-58 (CALI)", "t": "3256050", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MEGAFAM", "d": "CRA 5 Nº 6-57(popayan)", "t": "8380487", "i": "", "c": "POPAYAN (CAUCA)"}, {"n": "MI MEJOR FIESTA", "d": "CR. 19 Nº 9bis- 34", "t": "3134617700", "i": "", "c": "BOGOTA"}, {"n": "MI PAPELERIA", "d": "CRA 19 Nº 22-35 (SINCELEJO)", "t": "3135100198", "i": "", "c": "SINCELEJO (SUCRE)"}, {"n": "MI PAPELERIA", "d": "CRA 19 # 22-35  (SINCELEJO)", "t": "3135100198", "i": "", "c": "SINCELEJO (SUCRE)"}, {"n": "MICHELL PORTILLA", "d": "CRA 35 # 14-26 SAN  IGNACIO  (PASTO-NARIÑO)", "t": "3163795373", "i": "1087961490", "c": "PASTO (NARIÑO)"}, {"n": "MIGUEL ANGEL MONCALEANO", "d": "", "t": "", "i": "1026299049", "c": "BOGOTA"}, {"n": "MIGUEL ANTONIO SANCHEZ", "d": "CLL. 70 Nº 26-27 BARR. U PLANO LLOREDA (cali)", "t": "6632530", "i": "16724835-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MIL PIÑATAS", "d": "CRA 52 A # 45-33 LOCAL-203 (MEDELLIN)", "t": "3146885159", "i": "", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "MILEIDY GIRALDO ARISTIZABAL", "d": "CRA 8 # 13-82 LOCAL 132 (CALI)", "t": "3155411392", "i": "1130631718-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MILENA CASTELLANOS", "d": "CRA 19 # 5-116 ESQUINA B.MACUNAIMA  (VILLAVICENCIO)", "t": "3102811867", "i": "40421962-2", "c": "VILLAVICENCIO (META)"}, {"n": "MILENA GOMEZ", "d": "CLL 16 NRO 22 56 MEGACENTRO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MILENA LEITON LOPEZ", "d": "CALLE 4 # 7-29  (LIBANO-TOLIMA)", "t": "3202825999", "i": "1033677265-1", "c": "LIBANO (TOLIMA)"}, {"n": "MILENA ROZO", "d": "CAJICA-NUEVO", "t": "", "i": "", "c": "CAJICA (C/MARCA)"}, {"n": "MILENA ROZO", "d": "CALLE 3 Nº 6-75 (CAJICA)", "t": "", "i": "", "c": "CAJICA (C/MARCA)"}, {"n": "MILENA ROZO", "d": "SOPO", "t": "", "i": "", "c": "SOPO (C/MARCA)"}, {"n": "MILENA SALINAS", "d": "", "t": "3118098534", "i": "", "c": "BOGOTA"}, {"n": "MILENA SOLARTE", "d": "CALLE  14 # 7-120 (IPIALES)", "t": "3137267894", "i": "59832103-5", "c": "IPIALES (NARIÑO)"}, {"n": "MILENA VILLALOBOS", "d": "CALLE 57 A No 79G-04", "t": "3203692257", "i": "", "c": "BOGOTA"}, {"n": "MILLER AVILA GUERRERO", "d": "CRA 74 #  6A-47", "t": "3005587890", "i": "80732152-3", "c": "BOGOTA"}, {"n": "MIRIAM  ARAQUE CASTRO", "d": "CALLE 14 # 19-38  (ACACIAS-META)", "t": "3124999190", "i": "37707682-3", "c": "ACACIAS (META)"}, {"n": "MIRIAM CORTES", "d": "PENSILVANIA-CALDAS", "t": "", "i": "", "c": "PENSILVANIA (CALDAS)"}, {"n": "MISCELANEA ELGUI", "d": "DIAG. 70 Nº 25ª-32", "t": "6621535", "i": "31534155", "c": "BOGOTA"}, {"n": "MISCELANEA MI PAPELERIA", "d": "CALLE 19 Nº 18-30 (BOSCONIA)", "t": "3135100198", "i": "22739778-4", "c": "BOSCONIA (CESAR)"}, {"n": "MOMENTOS DECO", "d": "CALLE 31 A SUR # 43 A-24 (SAN MARCOS-ENVIGADO)", "t": "3002003815", "i": "43029854-6", "c": "SAN MARCOS (ENVIGADO)"}, {"n": "MONICA JUNCA", "d": "CRA 28 D # 72 P-33 COMUNEROS 2 (CALI)", "t": "3127571294", "i": "31971196-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "MONICA ROMERO", "d": "CALLE  16 # 22 A-40 (PASTO-NARIÑO)", "t": "3164466167", "i": "24605120", "c": "PASTO (NARIÑO)"}, {"n": "MONICA ZAPATA", "d": "CALLE  52 A # 32 A-4 (CALI)", "t": "", "i": "1116131278", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "Mr FIESTA SERGIO IZA", "d": "CARRERA 5 No 10-38", "t": "8808706", "i": "1088259366-4", "c": "BOGOTA"}, {"n": "MULTIVARIEDADES MP PIÑATERIA", "d": "CRA 16 # 5-105 ESQUINA  (AGUACHICA-CESAR)", "t": "3187303283", "i": "", "c": "AGUACHICA (CESAR)"}, {"n": "MUNDO DEL MANI", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "MUNDO MAGICO", "d": "TULUA", "t": "", "i": "", "c": "TULUA (VALLE)"}, {"n": "MUNDO MAGICO 1", "d": "CRA.9 No. 13A-48 LOCAL 101 CALI", "t": "8897423", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "NANCY TAPIA SOLARTE  \"SOLO FIESTAS\"", "d": "CALLE 4 # 5-12 B. CENTRO (VILLA GARZON-PUTUMAYO)", "t": "3107618877", "i": "69086700", "c": "VILLA GARZON (PUTUMAYO)"}, {"n": "NATALIA BLANDON LOPEZ", "d": "CARRERA 87P N° 67-22 SUR (BOGOTA)", "t": "3143944464", "i": "1012342485-0", "c": "BOGOTA"}, {"n": "NATALIA VARGAS   (FIESTAMANIA)", "d": "CALLE 84 # 22-112   (VALLE GRANDE-CALI)", "t": "3153855670", "i": "1144177850-8", "c": "VILLA GRANDE (CALI)"}, {"n": "NATALY  CUERVO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "NATALY ABRIL", "d": "CALLE 63 SUR # 19 D-40  (SAN FRANCISCO)", "t": "3043661125", "i": "", "c": "BOGOTA"}, {"n": "NATALY CLAVIJO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "NAYIBER HINCAPIE", "d": "CR.13 Nº 58-01", "t": "2353112", "i": "52737579-8", "c": "BOGOTA"}, {"n": "NEIRA LILIANA OCHOA", "d": "CALLE 8 # 5-71  CENTRO (POPAYAN)", "t": "3202367138", "i": "43287233-8", "c": "POPAYAN (CAUCA)"}, {"n": "NELLY BOTERO", "d": "CR.13 CLL 11", "t": "", "i": "", "c": "BOGOTA"}, {"n": "NELLY MARIN", "d": "PALMIRA", "t": "", "i": "", "c": "PALMIRA (VALLE)"}, {"n": "NELLY RESTREPO HURTADO", "d": "CRA 10 # 5-39 (SANTANDER DE QUILICHAO)", "t": "3103741107", "i": "34595490-2", "c": "SANTANDER DE QUILICHAO"}, {"n": "NEPTALY NOBOA", "d": "CR. 13 Nº 10-88 (Bogota)", "t": "2810156", "i": "79424605-3", "c": "BOGOTA"}, {"n": "NESTOR VALENCIA", "d": "Cra 17 No 20 - 76 (La Ceja - Antioquia)", "t": "3103960093", "i": "", "c": "LA CEJA (ANTIOQUIA)"}, {"n": "NICOLL OVIEDO GOMEZ \"MUNDO MAGICO\"", "d": "CALLE 38 # 24-46 LOCAL-1 (CALARCA)", "t": "3233686771", "i": "1005096586-5", "c": "CALARCA (QUINDIO)"}, {"n": "NINFA RUIZ RIVERO", "d": "CR 73 # 2C-85 (CALI)", "t": "3183425795", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "NIXON GONZALEZ", "d": "CALLE 9 Nº 7-36 CENTRO (PAZ DE ARIPORO CASANARE)", "t": "3118101449", "i": "", "c": "PAZ DE ARIPORO (CASANARE)"}, {"n": "NORMA CONSTANZA GONZALES", "d": "CRA 7 Nº 22-05(NEIVA)", "t": "8635939", "i": "", "c": "NEIVA (HUILA)"}, {"n": "NUBIA ALVAREZ", "d": "CALLE 141 # 103 C-09  SUBA", "t": "3194791416", "i": "", "c": "BOGOTA"}, {"n": "NUBIA MARTINEZ", "d": "C.C. PLAZA NARIÑO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "NUBIA SEGURA", "d": "CALLE 129 # 51 A-44  (PRADO VERANIEGO)", "t": "3142696108", "i": "1032427457-3", "c": "BOGOTA"}, {"n": "NUBIA STELLA URREGO AREVALO", "d": "CALLE 187 # 16-07  VERBENAL", "t": "3138905295", "i": "", "c": "BOGOTA"}, {"n": "NURY BELTRAN", "d": "CALLE 16 #  3-57 (IBAGUE)", "t": "3164613053", "i": "65744726", "c": "IBAGUE (TOLIMA)"}, {"n": "NURY CARVAJAL", "d": "CALLE 129A- Nº 93-09 (suba-rincon)", "t": "3142859174", "i": "", "c": "BOGOTA"}, {"n": "NURY CARVAJAL 2", "d": "CALLE 129A- Nº 93-09 (suba-rincon)", "t": "", "i": "", "c": "BOGOTA"}, {"n": "OCTAVIO DE JESUS MEJIA RAMIREZ", "d": "CALLE 13 # 4-70 PEATONAL (CARTAGO-VALLE)", "t": "3117709400", "i": "70695408-8", "c": "CARTAGO (VALLE)"}, {"n": "OCTAVIO DE JESUS MEJIA RAMIREZ", "d": "CRA 5 # 10-89 CATEDRAL (CARTAGO-VALLE)", "t": "3117709400", "i": "70695408-8", "c": "CARTAGO (VALLE)"}, {"n": "OLGA CRUZ", "d": "TUNAL", "t": "", "i": "", "c": "BOGOTA"}, {"n": "OLGA LILIANA ZAMBRANO", "d": "CALLE 18 # 19-28 (TRUJILLO-VALLE)", "t": "3154423216", "i": "30519547-5", "c": "TRUJILLO (VALLE)"}, {"n": "OLGA PATRICIA ARANGO VALENCIA", "d": "CRA 27 # 78-10 BONILLA-ARAGON (CALI)", "t": "3113828237", "i": "25021038-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "OLGA POVEDA", "d": "C.C PORTAL DE LA 13 LOCAL 18", "t": "", "i": "", "c": "BOGOTA"}, {"n": "OMAR CORREA", "d": "CALLE 44 No 21-17", "t": "4884678", "i": "", "c": "BOGOTA"}, {"n": "OMAR DORADO", "d": "CALLE 13 Nº 9-37 (GIRARDOT)", "t": "3102252980", "i": "", "c": "GIRARDOT (C/MARCA)"}, {"n": "OMAR GOMEZ", "d": "CRA 9 # 13-119 C.C CALIMAX LOCAL-206  (CALI)", "t": "8801998", "i": "6550231", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "OMAR GOMEZ", "d": "CRA 4 # 12-14 PARQUE BOLIVAR (JUMBO)", "t": "6952521", "i": "6550231", "c": "JUMBO (VALLE DEL CAUCA)"}, {"n": "OMAR LINARES", "d": "CRA 18 Nº 53-12 (BOGOTA)", "t": "3134399399", "i": "", "c": "BOGOTA"}, {"n": "ORLANDO BOTERO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ORLANDO ZULUAGA", "d": "CALLE 5 # 3-08 ESQUINA 2-PISO (FACATATICA)", "t": "3168649378", "i": "3607924", "c": "FACATATIVA (C/MARCA)"}, {"n": "OSCAR ARISTIZABAL", "d": "CALLE 14 Nº 9-35 (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "OSCAR GALLO", "d": "", "t": "3046686892", "i": "", "c": "BOGOTA"}, {"n": "OSCAR JIMENEZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "OSCAR PATIÑO", "d": "CALLE 11  centro", "t": "", "i": "", "c": "BOGOTA"}, {"n": "OVER QUIÑONES", "d": "CALLE 42 SUR # 88 A-26 B.DINDALITO", "t": "3203487610", "i": "", "c": "BOGOTA"}, {"n": "PABLO HERRERA", "d": "SANTA LIBRADA", "t": "3204862957", "i": "", "c": "BOGOTA"}, {"n": "PAOLA ANDREA CASTILLO AGUIRRE", "d": "CALLE 63 C # 69 P-32 BOSQUE POPULAR", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PAOLA BAUTISTA ACOSTA", "d": "CALLE 5 A # 45-15", "t": "3226449054", "i": "1010183438", "c": "BOGOTA"}, {"n": "PAOLA BULLA ABA", "d": "CALLE 62 # 23-61  LOCAL 102 ( MANIZALES)", "t": "3206662272", "i": "", "c": "MANIZALES (CALDAS)"}, {"n": "PAOLA DIAZ", "d": "CRA 1 Nº 70C-30 (cali)", "t": "3751778", "i": "26430276-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PAOLA LASSO", "d": "MANZANA E CASA 24  B. PIE DE CUESTA (PASTO)", "t": "3155167275", "i": "36756101-1", "c": "PASTO (NARIÑO)"}, {"n": "PAOLA RUIZ GONZALES", "d": "CALLE 7 # 10-36 B.LA ESMERALDA (JAMUNDI)", "t": "3172120806", "i": "29820866-5", "c": "JAMUNDI (VALLE)"}, {"n": "PAPELERIA FANTASY", "d": "CALLE 9 Nº 14-29  (PLATO-MAGDALENA)", "t": "3135100198", "i": "84075387-4", "c": "PLATO (MAGDALENA)"}, {"n": "PAPELERIA MAICAO", "d": "CALLE 12 Nº 14-29 (MAICAO)", "t": "3135100198", "i": "1067899856-0", "c": "MAICAO (GUAJIRA)"}, {"n": "PAPELERIA MILAGROS", "d": "CALLE 3 # 6-56 PISO 1 LOCAL-101 (SAN JUAN DEL CESAR)", "t": "3022330624", "i": "1124026563-3", "c": "SAN JUAN DEL CESAR"}, {"n": "PAPELERIA PRINCIPAL", "d": "CRA 44 Nº 35-12 (BARRANQUILLA)", "t": "3135100198", "i": "79781932-7", "c": "BARRANQUILLA (ATLANTICO)"}, {"n": "PAPELERIA SANTINI", "d": "CALLE 6 # 40-33 AV PRINCIPAL B.LA NEVADA (VALLEDUPAR)", "t": "3013767353", "i": "37370266-3", "c": "VALLEDUPAR (CESAR)"}, {"n": "PATRICIA DIAZ", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PATRICIA FIGUEROA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PATRICIA RAMIREZ  (MI PRINCIPE)", "d": "CRA 5 # 13-23  (COTA)", "t": "3103233946", "i": "24435301-7", "c": "COTA (C/MARCA)"}, {"n": "PATRICIA ROMERO", "d": "DIAGONAL 68 I # 31-57  CANDELARIA", "t": "3142741471", "i": "", "c": "BOGOTA"}, {"n": "PATRICIA TOVAR (FIESTAS MEY )", "d": "CALLE 1 OESTE # 50-70  SILOE  (CALI)", "t": "3117336319", "i": "31531979", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PAULA CABLLERO BALCAZAR", "d": "CALLE 37 # 27-55 (VILLAVICENCIO)", "t": "3114437695", "i": "35264123-8", "c": "VILLAVICENCIO (META)"}, {"n": "PEDRO RAMIREZ", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PILAR AZUCENA HERNANDEZ NAVARRO", "d": "CALLE 16 # 22-50 B CENTRO (PASTO-NARIÑO)", "t": "3156019927", "i": "59314882", "c": "PASTO (NARIÑO)"}, {"n": "PILÑATERIA Y DETALLES PUNTO AVENTURA", "d": "CALLE 37 SUR # 78 H-40 N (KENEDY)", "t": "3213059836", "i": "", "c": "BOGOTA"}, {"n": "PIÑATAS EL PAYASITO (Restrepo)", "d": "CRA 17 No 16 - 63", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATAS THE VERITAS (DIANA ROZO)", "d": "CHIQUINQUIRA", "t": "", "i": "", "c": "CHIQUINQUIRA (BOYACA)"}, {"n": "PIÑATAS TRAVESURAS", "d": "MODELIA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATAS TRAVESURAS", "d": "CASA BLANCA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATAS TRAVESURAS", "d": "KENNEDY", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATAS Y SORPRESAS", "d": "CRA 112 A # 78 C-53", "t": "3003160430", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA ARCOIRIS", "d": "CRA 13 Nº 10-88 CENTRO)", "t": "3124960971", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA DON ROQUE", "d": "CRA 8 # 13-103 CALI-CENTRO", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PIÑATERIA EL RIO", "d": "CALLE 48 # 56-30  (MEDELLIN)", "t": "", "i": "3216030090", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "PIÑATERIA FIESTAS Y DETALLES", "d": "CALLE 11 # 12-32 EDIFICIO COLOMBIA (SOGAMOSO)", "t": "3133021223", "i": "1057581985", "c": "SOGAMOSO (BOYACA)"}, {"n": "PIÑATERIA GALAXIA", "d": "CLL. 9 Nº 35ª-55", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA GALAXIA", "d": "CALL. 9 Nº30A-11 (CALI)", "t": "3797515", "i": "900351823-0", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PIÑATERIA GASPARIN", "d": "C.C. SAN CARLOS", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA GLOBOS Y FIESTAS", "d": "AV 5 OESTE # 22-22 (CALI)", "t": "3162516018", "i": "76317783", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PIÑATERIA GUACHAFITAS", "d": "CRA 78 K # 35 A-11  KENEDY", "t": "3125324527", "i": "52771506-1", "c": "BOGOTA"}, {"n": "PIÑATERIA LA  ALEGRIA", "d": "CALLE 11 # 23-15 B.SAN NICOLAS (PUERTO ASIS-PUTUMAYO)", "t": "", "i": "12993407", "c": "PUERTO ASIS (PUTUMAYO)"}, {"n": "PIÑATERIA MEGAMAX AYJ", "d": "CALLA 6A Nº 17-64 (POPAYAN)", "t": "3164554251", "i": "1026865-0", "c": "POPAYAN (CAUCA)"}, {"n": "PIÑATERIA MIS PRINCESITAS", "d": "CRA 12 No 52-20", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA NAMELIN", "d": "SAN CARLOS", "t": "3213336197", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA PATO DONALD NATHALIA GONZALEZ", "d": "CRA 19 A # 9 BIS-34 LOCAL -220 SAN ANDRESITO-SAN JOSE", "t": "", "i": "", "c": "BOGOTA"}, {"n": "PIÑATERIA PIDECOR", "d": "CALLE 50 # 47-70 COPACABANA (ANTIOQUIA)", "t": "034-4983372", "i": "9011997942", "c": "COPACABANA (ANTUIQUIA)"}, {"n": "PIÑATERIA SEBASTIAN", "d": "CRA 89 # 58 A-81 SUR  (BOSA LA LIBERTAD)", "t": "3123597023", "i": "53892495", "c": "BOGOTA"}, {"n": "PIÑATERIA SERPENTINA MUNDO MAGICO", "d": "CRA 10  # 10-89  2 PISO  (SOGAMOSO)", "t": "3133021223", "i": "1057581985", "c": "SOGAMOSO (BOYACA)"}, {"n": "PIÑATERIA Y CACHARRERIA BIMBO", "d": "CALLE 15 # 16-74 PISO 2 (DUITAMA)", "t": "7602752", "i": "51925611", "c": "DUITAMA (BOYACA)"}, {"n": "PIÑATERIA Y DECORACION MUNDO MAGICO", "d": "CALLE 38 # 24-46 LOCAL-1 (CALARCA)", "t": "3104095163", "i": "1097390585-2", "c": "CALARCA (QUINDIO)"}, {"n": "PLASTICOS WIBER", "d": "CALLE 129 A # 93-09 SUBA-RINCON", "t": "3142859174", "i": "", "c": "BOGOTA"}, {"n": "PLASTICOS Y ARTICULOS DESECHABLES", "d": "CARRERA 11 D # 18 B- 11 SUR (COMPARTIR)", "t": "3114807912", "i": "", "c": "SOACHA (C/MARCA)"}, {"n": "PLASTICOS Y DESECHABLES", "d": "CALLE 30C#9-21E(SAN MATEO)", "t": "", "i": "", "c": "SAN MATEO (C/MARCA)"}, {"n": "PLASTICOS Y PIÑATAS LA 22 (maria del socorro santacruz)", "d": "CRA 22 No,14-98 (pasto)", "t": "7217811/3182062777", "i": "", "c": "PASTO (NARIÑO)"}, {"n": "PREMIOS Y PROMOCIONES", "d": "CALLE 9 #  32 A 05  (CALI)", "t": "5583497", "i": "900163982-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "PUNTO FIESTA", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "RAQUEL CIFUENTES", "d": "CRA  13 # 11-56  LOCAL 18-20 (SAN VICTORINO)", "t": "3004200639", "i": "", "c": "BOGOTA"}, {"n": "RAUL ALARCON", "d": "CALLE 8 Nº 3-50 (IPIALES)", "t": "7253642", "i": "", "c": "IPIALES (NARIÑO)"}, {"n": "RAUL FERNANDEZ", "d": "", "t": "3103053756", "i": "", "c": "BOGOTA"}, {"n": "RICARDO PARRA", "d": "CRA 2 # 16-05 ( IBAGUE )", "t": "", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "RICARDO PULGARIN", "d": "CLL 16 No. 7 - 41", "t": "3338008", "i": "", "c": "BOGOTA"}, {"n": "RICAURTE PALACIOS HIDALGO", "d": "CALLE 11  # 9-37 LOCAL-37  JAMUNDI (VALLE DEL CAUCA)", "t": "3147962872", "i": "6284157-8", "c": "JAMUNDI (VALLE)"}, {"n": "RICHARD EDISON PRIETO", "d": "CRA 36 No 28-27", "t": "3103393486", "i": "", "c": "BOGOTA"}, {"n": "RIGOBERTO RUBIANO", "d": "CK 56 N 2B -13 ( GALAN )", "t": "3118272288", "i": "", "c": "BOGOTA"}, {"n": "ROMULO MONTES", "d": "CRA. 10 N| 8-43 (CALI)", "t": "8804697", "i": "800198467-8", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "RONAL RODRIGUEZ", "d": "CR. 18 Nº 11-80", "t": "3144108082", "i": "80911587", "c": "BOGOTA"}, {"n": "ROQUE TULIO ENSISO", "d": "CR.8 Nº 13-103 (CALI)", "t": "8841385", "i": "19076096-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ROQUE TULIO ENSISO", "d": "CR. 9 Nº 13-121 (CALI)", "t": "8841952", "i": "19076096-2", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "ROSA ADELA CLAVIJO", "d": "C.C.DINALCO SOTANO", "t": "", "i": "", "c": "BOGOTA"}, {"n": "ROSALBA FLOREZ", "d": "CRA 4 N No 72 G 14 C.C PATUCA", "t": "4347997", "i": "38438137-1", "c": "BOGOTA"}, {"n": "ROSALBA FLOREZ MONCAYO", "d": "CR. 4n-Nº 72g-18 C.C. PATUCA FLORALIA", "t": "4347997", "i": "38438137-1", "c": "BOGOTA"}, {"n": "ROSMERY GUERRERO GIRALDO\" ALMACEN FIESTA BOOM\"", "d": "CRA 5 # 7-33 (POPAYAN-CAUCA)", "t": "3059257631", "i": "1061703772", "c": "POPAYAN (CAUCA)"}, {"n": "RUBIEL ALEXANDER ESTRADA ARIAS", "d": "CALLE 4 # 11-41 CENTRO SANTADER DE QUILICHAO", "t": "3233223793", "i": "1036394737-1", "c": "SANTANDER DE QUILICHAO"}, {"n": "RUBIELA BAUTISTA", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "RUBIELA CUELLAR", "d": "CALLE 11 Nº 24-01 (PUERTO ASIS-PUTUMAYO)", "t": "3107932039", "i": "66833903", "c": "PUERTO ASIS (PUTUMAYO)"}, {"n": "RUBY STELLA DAZA", "d": "CALLE 2 N° 7-37 (B/VENTURA)", "t": "3174266621", "i": "29740758-4", "c": "BUENAVENTURA (VALLE)"}, {"n": "SALOME ARIAS", "d": "CRA 51 # 50-43 2 PISO (SEVILLA-VALLE)", "t": "3206515516", "i": "1118301327", "c": "SEVILLA (VALLE)"}, {"n": "SANDRA ALBARRACIN", "d": "CALLE  9 #  5-17 CENTRO (TOCANCIPA)", "t": "3106562660", "i": "", "c": "TOCANCIPA (C/MARCA)"}, {"n": "SANDRA AVENDAÑO", "d": "CALLE 6 No 6-55", "t": "8711354", "i": "Neiva", "c": "BOGOTA"}, {"n": "SANDRA BARRERO", "d": "SAN MATEO", "t": "3118737336", "i": "1018460162", "c": "SAN MATEO (C/MARCA)"}, {"n": "SANDRA CAMARGO MENDOZA", "d": "CLL. 11 Nº 11-12 LOCAL 7", "t": "", "i": "", "c": "BOGOTA"}, {"n": "SANDRA CARDONA", "d": "CRA 3 # 4-82  B. CENTRO (MARIQUITA)", "t": "3115781064", "i": "75794651", "c": "MARIQUITA (TOLIMA("}, {"n": "SANDRA CASTRO", "d": "CRA 14 Nº 73D-56 SUR   SANTA LIBRADA", "t": "3192961109", "i": "", "c": "BOGOTA"}, {"n": "SANDRA CHACON", "d": "DIG 34 No 13-88", "t": "3103405716", "i": "", "c": "BOGOTA"}, {"n": "SANDRA CORTES MARTINEZ", "d": "CALLE 13 # 12-25 CENTRO (FLORENCIA-CAQUETA)", "t": "3202598409", "i": "", "c": "FLORENCIA (CAQUETA)"}, {"n": "SANDRA GIRALDO", "d": "CALLE 9 No 28-45", "t": "3173774218", "i": "", "c": "BOGOTA"}, {"n": "SANDRA HERRERA", "d": "CRA 26 Nº 49-23 FLORESTA(CALI)", "t": "4439654", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA HERRERA", "d": "CARRERA 26N No 49-15  CALI", "t": "3184707619", "i": "66843093-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA LILIANA PINEDA", "d": "CALLE 38 # 29 A-10  (VILLAVICENCIO)", "t": "3008237547", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "SANDRA MARIA CANO", "d": "CC PUERTO BELLO L.47 PISO 2", "t": "3167499934", "i": "", "c": "BOGOTA"}, {"n": "SANDRA MILENA COBO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA MILENA PORRAS", "d": "MERCADO CUBIERTO  LOCAL-25  (SAN GIL-SANTANDER)", "t": "3107849064", "i": "37896390", "c": "SAN GIL (SANTANDER)"}, {"n": "SANDRA PATRICIA  FLOREZ", "d": "CRA 17 #14-24 (ACACIAS)", "t": "3105857019", "i": "52333602-2", "c": "ACACIAS (META)"}, {"n": "SANDRA PATRICIA ARIAS", "d": "CR. 9 Nº 12-49 CENTRO (CALI)", "t": "3104701727", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA PATRICIA GIRALDO", "d": "CALI", "t": "3106879565", "i": "55063711-9", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA PATRICIA ROJAS", "d": "CALLE 51 SUR # 37-52   ( FATIMA)", "t": "3106879565", "i": "", "c": "BOGOTA"}, {"n": "SANDRA PATRICIA VILLAREJO", "d": "CR. 9 Nº 11-38 CENTRO(CALI)", "t": "8844326", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SANDRA SORANY CARDONA", "d": "CRA 3 # 4-82  B. CENTRO (MARIQUITA)", "t": "3115781064", "i": "65794651", "c": "MARIQUITA (TOLIMA("}, {"n": "SANTIAGO RAMIREZ", "d": "CALLE 16 N°3-48  (IBAGUE)", "t": "", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "SANTIAGO RIAÑO", "d": "DIAG 44 B #22 A-19 SUR", "t": "3115985453", "i": "", "c": "BOGOTA"}, {"n": "SEBASTIAN CAMILO CASTAÑO", "d": "CRA 28 # 38-17  B. VILLA JULIA  (VILLAVICENCIO)", "t": "3208073569", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "SERGIO BUILES", "d": "CR 11 # 13-7 VILLAGORGONA", "t": "3163699139", "i": "", "c": "VILLA GORGONA (CANDELARIA)"}, {"n": "SILAVANA LORENA GOMEZ", "d": "CAR 28 D # 72 F-175 C.C LA COMPLETISIMA (CALI)", "t": "3167848620", "i": "67024279", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SILVIA CRISTINA CUELLAR", "d": "CALLE 7 # 3-14 (NEIVA-HUILA)", "t": "8628414", "i": "", "c": "NEIVA (HUILA)"}, {"n": "SILVIA MONTOYA", "d": "CALLE 49 # 49 A-13 ( ITAGUI)", "t": "3739690", "i": "", "c": "ITAGUI (ANTIOQUIA)"}, {"n": "SINDY LORENA NIÑO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "SINDY VILLEGAS", "d": "CRA 38 # 17-219 C.C PRADO VERDE LOCAL-133  C.VERDE", "t": "3202505341", "i": "", "c": "BOGOTA"}, {"n": "SIRI CYV SAS", "d": "CALLE 9 # 26-37 ALAMEDA(CALI)", "t": "3114656190", "i": "901698815-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "SOFIA GALVIS", "d": "CARRERA 7 #90-81( BOGOTA)", "t": "3127578681", "i": "", "c": "BOGOTA"}, {"n": "SOLANYI OVIEDO RODRIGUEZ", "d": "CRA 6 # 8-91  (SAN MARTIN-META)", "t": "3112061103", "i": "40333233-4", "c": "SAN MARTIN (META)"}, {"n": "SONIA HERRERA", "d": "CALLE 65 SUR No 80-16", "t": "3213907012", "i": "", "c": "BOGOTA"}, {"n": "STEFANY ARANGO LOPEZ", "d": "CALLE 33 # 23-06 (PALMIRA-VALLE)", "t": "3003770797", "i": "1113625913-3", "c": "PALMIRA (VALLE)"}, {"n": "STEFANY BERRIO", "d": "CRA 24 # 31-46 CALARCA (QUINDIO)", "t": "3206883519", "i": "", "c": "CALARCA (QUINDIO)"}, {"n": "SUMMERPLAST", "d": "CALLE 38 N 86C- 76 (PATIO BONITO)", "t": "3143051131", "i": "", "c": "BOGOTA"}, {"n": "SUPER  FIESTAS", "d": "CRA 112 A # 75 A-06  (BOGOTA)", "t": "3006386308", "i": "", "c": "BOGOTA"}, {"n": "SUPER  FIESTAS CY", "d": "BOGOTA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "SUPER PARTY (Viviana Patricia Ramos)", "d": "CALLE 7 Nº 6B-25 (CANDELARIA)", "t": "3103332911", "i": "1113512552", "c": "CANDELARIA (VALLE)"}, {"n": "SURTIGLOBOS ADRIAN RIOS", "d": "CALLE21 Nº 17-53 (ARMENIA)", "t": "7440748", "i": "", "c": "ARMENIA (QUINDIO)"}, {"n": "TEODOLINDA BUSTAMANTE", "d": "CALLE 58 # 16-38 SUR", "t": "3132203558", "i": "", "c": "BOGOTA"}, {"n": "TEYLOR QUIÑONEZ", "d": "CALLE 42 SUR # 88 A-26", "t": "3143051131", "i": "", "c": "BOGOTA"}, {"n": "TOYS COMPANY", "d": "AV. 19 Nº 152-25 (CEDRITOS)", "t": "", "i": "900450306", "c": "BOGOTA"}, {"n": "TOYS COMPANY S.A.S (ibague)", "d": "CR. 3 Nº 17-25", "t": "2625237", "i": "", "c": "BOGOTA"}, {"n": "TOYS COMPANY S.A.S. (CHILDREN PALACE 3)", "d": "AV. 19 Nº 152-25", "t": "", "i": "900450306-3", "c": "BOGOTA"}, {"n": "TOYS MARKET", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "TRAVESURAS Y PICARDIAS", "d": "TRANSV. 94 # 84-72 (BOGOTA)", "t": "3006386308", "i": "", "c": "BOGOTA"}, {"n": "TU FIESTA Y REGALOS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "TU FIESTAS Y REGALOS", "d": "", "t": "3014589259", "i": "", "c": "BOGOTA"}, {"n": "UBERNEY GIRALDO", "d": "CALLE 9 # 18-06  (FLORIDA-VALLE)", "t": "3136518524", "i": "", "c": "FLORIDA (VALLE)"}, {"n": "UNIVERSAL DE ADORNOS", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "UNIVERSAL DE DULCE Y DETALLES (MARIA PAULA)", "d": "CL 14 # 8-82 LOCAL 230 (CALI)", "t": "3006746750", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "UNIVERSAL PARTY", "d": "CALLE 140 No 13 82", "t": "", "i": "", "c": "BOGOTA"}, {"n": "UNIVERSO DE LAS SORPRESAS", "d": "(CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VALENTINA TIRADO", "d": "CRA 112A # 75A-06 (BOGOTA)", "t": "3006386308", "i": "", "c": "BOGOTA"}, {"n": "VANESA MARQUEZ MONTES", "d": "CALLE 59 A # 12-04 B.INMACULADA (SOLEDAD-ATLANTICO)", "t": "3005181873", "i": "1129502527", "c": "SOLEDAD (ATLANTICO)"}, {"n": "VANNESA LOPEZ", "d": "CRA 5 # 9-38  (YUMBO)", "t": "3014699852", "i": "1118295065-3", "c": "YUMBO (VALLE)"}, {"n": "VARIEDADES CHALO", "d": "CALI", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VARIEDADES D´MARIO (marta vanegas)", "d": "Cra. 12 nº 11-25", "t": "3425826", "i": "79444459-1", "c": "BOGOTA"}, {"n": "VARIEDADES KATTY Y VALENTINA", "d": "CRA 2 # 7-14 (GINEBRA-VALLE)", "t": "2563757", "i": "700052348-1", "c": "GINEBRA (VALLE)"}, {"n": "VARIEDADES LIZ (RICARDO EDUARDO PULGARIN)", "d": "CLL. 16 No. 7 -41 (Pereira)", "t": "3338008", "i": "10137217-7", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "VARIEDADES VALENTINA", "d": "CRA 26 M # 87-67 (LOS MANGOS-CALI)", "t": "3173723868", "i": "1192805513-0", "c": "LOS MANGOS (VALLE)"}, {"n": "VARIEDADES YENNY", "d": "CALLE 12 # 6-11 (RIOACHA-GUAJIRA)", "t": "3104674637", "i": "1007360856-8", "c": "RIOACHA (GUAJIRA)"}, {"n": "VELASQUEZ JARAMILLO Y CIA LTDA.", "d": "CLL. 10 Nº 9-50 (CALI)", "t": "8881840", "i": "800040182-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VELASQUEZ JARAMILLO Y CIA LTDA.", "d": "CALLE 53 Nº 21-12 (BOGOTA)", "t": "7498841", "i": "800040182-5", "c": "BOGOTA"}, {"n": "VERONICA QUINTERO", "d": "CRA 86 # 55 A-75 C.C NUESTRO BOGOTA  LOCAL-2085 (BOGOTA)", "t": "3156555365", "i": "", "c": "BOGOTA"}, {"n": "VERONICA QUINTERO", "d": "CALLE 13 # 80-60", "t": "", "i": "", "c": "BOGOTA"}, {"n": "VERONICA QUINTERO \"UN MILLON DE ILUSIONES\"", "d": "CRA 66 # 10-50  CALI", "t": "3156555365", "i": "1144044407", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VICTOR ALFONSO GOMEZ", "d": "CRA 55 # 45 A-33 (MEDELLIN)", "t": "3108304753", "i": "", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "VICTOR ALFONSO PARRA GUITIERREZ", "d": "CALLE 94 # 50 C-31 B.ARANJUEZ (MEDELLIN)", "t": "3122185333", "i": "1152685437", "c": "MEDELLIN (ANTIOQUIA)"}, {"n": "VICTOR MANUEL MARTINEZ", "d": "AV 6 # 33-06 (CALI)", "t": "3148190614", "i": "1113685649-1", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VICTORIA FERNANDEZ", "d": "CALLE 36 SUR # 77-24  1 PISO (KENEDY)", "t": "3209632598", "i": "1030611324-3", "c": "BOGOTA"}, {"n": "VICTORIA LEYVA", "d": "CRA 4 # 5-74 CENTRO  (CHICORAL-TOLIMA)", "t": "3166499584", "i": "", "c": "CHICORAL (TOLIMA)"}, {"n": "VIVIAN JOHANA BASTIDAS", "d": "C.C. ESTACION CENTRAL", "t": "", "i": "", "c": "BOGOTA"}, {"n": "VIVIANA PATRICIA ROMO", "d": "CALLE 8 # 7-21 (CANDELARIA-VALLE)", "t": "3128849275", "i": "1113512552", "c": "CANDELARIA (VALLE)"}, {"n": "VIVIANA PATRICIA ROMO", "d": "CALLE 8 # 7-21 CANDELARIA (VALLE)", "t": "3214442636", "i": "1113512552", "c": "CANDELARIA (VALLE)"}, {"n": "VIVIANA RIAÑO", "d": "CRA.44 # 95-102 (CALI)", "t": "", "i": "", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "VIVIANA VARGAS", "d": "3167865656", "t": "", "i": "", "c": "BOGOTA"}, {"n": "VLADIMIR AUGUSTO MARTINEZ CAMARGO", "d": "CRA 19 # 35-66  (PALMIRA)", "t": "3212170080", "i": "80061384", "c": "PALMIRA (VALLE)"}, {"n": "WALTER SALDARRIAGA", "d": "CALLE 9 Nº 20-63 (FLORIDA)", "t": "3153778917", "i": "16929578-1", "c": "FLORIDA (VALLE)"}, {"n": "WILFREDO PALOMA SUACHE", "d": "CRA 88 C # 69 A-09 SUR  BOSA INDEPENDICIA", "t": "", "i": "", "c": "BOGOTA"}, {"n": "WILLIAM ALBERTO GIRALDO", "d": "CR. 9 Nº 13ª 40 LOCAL 131 CALI", "t": "8854947", "i": "70693731-3", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "WILMAR LEON ALZATE", "d": "CRA 7 # 31-09 (PEREIRA)", "t": "3173006281", "i": "10143117", "c": "PEREIRA (VALLE DEL CAUCA)"}, {"n": "WILSON ABRIL", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "XIOMARA FERNANDEZ", "d": "CRA 30 A # 7-36  (CEDRO-CALI)", "t": "3014589259", "i": "", "c": "CEDRO (VALLE)"}, {"n": "YAQUELIN CASTRO", "d": "CLL 33 A SUR No 4 B   61 CASA", "t": "3105549495/2067881", "i": "", "c": "BOGOTA"}, {"n": "YENNY ELVIRA SERNA GARCIA", "d": "CALLE 37 A #29-85 (VILLAO)", "t": "3108519474", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "YENNY FIGUEROA", "d": "CALLE 66 N| 18N - 25", "t": "", "i": "", "c": "BOGOTA"}, {"n": "YENNY ROCIO YAYA", "d": "CALLE 9  # 6-23 PISO 1 (SIMIJACA) CUNDINAMARCA", "t": "3102339471", "i": "", "c": "SIMIJACA (C/MARCA)"}, {"n": "YENNY SERNA GARCIA", "d": "CALLE 37 B #  29-30 3 PISO  EDIFICIO ALCARAVAN (VILLAVICENCIO)", "t": "3108519474", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "YENNY SERNA GARCIA", "d": "CALLE 37 B # 27-50 B.VILLA JULIA (VILLAVICENCIO)", "t": "3124523861", "i": "", "c": "VILLAVICENCIO (META)"}, {"n": "YENNY SERNA GARCIA", "d": "CALLE 37 A # 29-85 CENTRO (VILLAVICENCIO)", "t": "3124523861", "i": "40403995-9", "c": "VILLAVICENCIO (META)"}, {"n": "YERALDINE FUQUENE", "d": "CALLE 156 N1º 7H-45 8BOGOTA)", "t": "3123645880", "i": "", "c": "BOGOTA"}, {"n": "YESICA FERNANDA MONTOYA PINEDA", "d": "CALLE 38 # 29A-10 B.CENTRO (VILLAVICENCIO)", "t": "3015497179", "i": "1122650408-3", "c": "VILLAVICENCIO (META)"}, {"n": "YESID VALERO", "d": "", "t": "", "i": "", "c": "BOGOTA"}, {"n": "YINNA NOVA", "d": "CARRERA 78 K No57A-11", "t": "4942305", "i": "3128607346", "c": "BOGOTA"}, {"n": "YOLANDA CABAL", "d": "cll. 16 nº 3-51 (ibague)", "t": "2633058", "i": "", "c": "IBAGUE (TOLIMA)"}, {"n": "YOLANDA ISAZA", "d": "CALLE 2B No 94A- ESQUINA       CALI", "t": "3217822530", "i": "66820845-5", "c": "CALI (VALLE DEL CAUCA)"}, {"n": "YORLEIDIS SALCEDO RAMIREZ", "d": "SANVICENTE CAGUAN", "t": "", "i": "", "c": "SAN VICENTE DEL CAGUAN (CAQUETA"}, {"n": "YOSELIN ERAZO FERNANDEZ", "d": "CALLE 10 # 12-21  B. CHAPINERO (DAGUA-VALLE)", "t": "3106588270", "i": "1114736083-5", "c": "DAGUA (VALLE)"}, {"n": "YULI AGUIRRE", "d": "CALLE 71 B- Nº 1A-2-32", "t": "3173227789", "i": "1130665226", "c": "BOGOTA"}, {"n": "YULI SALINAS", "d": "", "t": "3118098534", "i": "53092845", "c": "BOGOTA"}, {"n": "YULIET PEREZ BERRIO", "d": "CRA 15 # 6-23 CENTRO (LEJANIAS-META)", "t": "3214842445", "i": "52546664", "c": "LEJANIAS (META)"}, {"n": "YULY CARDENAS", "d": "CALLE 73C #88D-65 SUR", "t": "", "i": "", "c": "BOGOTA"}, {"n": "YURY MARGARITA GIRALDO ZULUAGA", "d": "CALLE 32 # 21 B-13 B.QUIROGA", "t": "3144558430", "i": "", "c": "BOGOTA"}, {"n": "ZAMIRA PERALTA", "d": "CALLE 15 # 9-48  (CHIQUINQUIRA)", "t": "3158670918", "i": "", "c": "CHIQUINQUIRA (BOYACA)"}, {"n": "ZORAIDA PEREZ", "d": "CALLE 12 bis No 71D-41", "t": "3203069972", "i": "", "c": "BOGOTA"}];
+
+// ===== PRODUCT DEFINITIONS =====
+const CATEGORIAS = [
+  {
+    id: 'clasicos',
+    nombre: 'CLÁSICOS',
+    color: 'c1',
+    items: ['ARENA','ROSADO PASTEL','AZUL PASTEL','VERDE PASTEL','LILA','AMARILLO CLARO'],
+    productos: ['BANDEJA','VASO','CUBIERTO','PLATO','MANTEL','FALDON','GUIRNALDA','G. D. P.','BANDERIN','C. SORPRESA'],
+    type: 'grid'
+  },
+  {
+    id: 'metalizados',
+    nombre: 'METALIZADOS',
+    color: 'c2',
+    items: ['FELIZ CUMP. DORADO','FELIZ CUMP. PLATA','FELIZ CUMP. ORO ROSA','FELIZ CUMP. AZUL REY','FELIZ CUMP. FUCSIA','FELIZ CUMP. ROJO','ANIVERSARIO DORADO','ANIVERSARIO ROJO','ANIVERSARIO PLATA','PRIMERA C. DORADO','BAUTIZO DORADO','GRADO DORADO','GRADO AZUL','GRADO ORO ROSA'],
+    productos: ['BANDEJA','VASO','CUBIERTO','PLATO','MANTEL','FALDON','GUIRNALDA','G. D. P.','BANDERIN'],
+    type: 'grid'
+  },
+  {
+    id: 'mantel',
+    nombre: 'MANTEL UNICOLOR',
+    color: 'c3',
+    items: ['BLANCO','NARANJA','FUCSIA','VERDE','ROJO','AZUL REY','NEGRO','PLATA','EUCALIPTO','AZUL NAVAL'],
+    type: 'simple'
+  },
+  {
+    id: 'topper',
+    nombre: 'TOPPER DE PARED',
+    color: 'c4',
+    items: ['FELIZ C. AZUL REY','FELIZ C. NEGRO','PRIMERA COM. DORADO','BAUTIZO DORADO','FELIZ DIA MAMA','FELIZ C. ROJO','FELIZ C. DORADO','FELIZ C. PLATA','FELIZ C. ORO ROSA','FELIZ C. FUCSIA','MI GRADO DORADO','MI GRADO AZUL REY','MI GRADO NEGRO','MI GRADO PLATA'],
+    type: 'simple'
+  },
+  {
+    id: 'temporada',
+    nombre: 'TEMPORADA',
+    color: 'c5',
+    items: ['MOVIL LOVE X2','MOVIL CORAZON X3 LOVE','MOVIL CORAZON AMOR','MOVIL CORAZON FLOR','CORTINA','GUIRNALDA CORAZONES','GUIR. CORAZON GRANDE ROJA','GUIR. MET. AMOR CURSIVA','GUIR. FELIZ DIA CURSIVA','ESPIRAL X4','GUIRNALDA D. P. FELIZ DIA MAMA','GUIR. CURSIVA TE AMO MAMA','GUIR. CORAZON TE AMO MAMA','LETRERO TE AMO MAMA'],
+    type: 'simple'
+  }
+];
+
+// ===== STATE =====
+const STORAGE_KEY = 'pedido_arcoiris';
+let data = {};
+
+// ===== DOM REFS =====
+const $ = id => document.getElementById(id);
+const searchCliente = $('searchCliente');
+const suggestions = $('suggestions');
+const categoriasEl = $('categorias');
+const resumenGrid = $('resumenGrid');
+const totalGeneral = $('totalGeneral');
+const resumenTexto = $('resumenTexto');
+const toast = $('toast');
+
+// ===== INIT =====
+function init() {
+  $('fecha').valueAsDate = new Date();
+  loadState();
+  renderCategorias();
+  updateResumen();
+  bindEvents();
+}
+
+// ===== STATE MANAGEMENT =====
+function saveState() {
+  const state = {
+    cliente: $('cliente').value,
+    direccion: $('direccion').value,
+    telefono: $('telefono').value,
+    ciudad: $('ciudad').value,
+    nit: $('nit').value,
+    vendedor: $('vendedor').value,
+    fecha: $('fecha').value,
+    searchCliente: searchCliente.value,
+    productos: data
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!saved) return;
+    $('cliente').value = saved.cliente || '';
+    $('direccion').value = saved.direccion || '';
+    $('telefono').value = saved.telefono || '';
+    $('ciudad').value = saved.ciudad || '';
+    $('nit').value = saved.nit || '';
+    $('vendedor').value = saved.vendedor || '';
+    $('fecha').value = saved.fecha || '';
+    searchCliente.value = saved.searchCliente || '';
+    if (saved.productos) data = saved.productos;
+  } catch(e) {}
+}
+
+function getQty(catId, item, prod) {
+  if (!data[catId]) data[catId] = {};
+  if (!data[catId][item]) data[catId][item] = {};
+  const k = prod || '_qty';
+  if (data[catId][item][k] === undefined) data[catId][item][k] = 0;
+  return data[catId][item][k];
+}
+
+function setQty(catId, item, val, prod) {
+  if (!data[catId]) data[catId] = {};
+  if (!data[catId][item]) data[catId][item] = {};
+  const k = prod || '_qty';
+  data[catId][item][k] = Math.max(0, parseInt(val) || 0);
+  saveState();
+  updateResumen();
+}
+
+// ===== CATEGORY RENDER =====
+function renderCategorias() {
+  categoriasEl.innerHTML = '';
+  CATEGORIAS.forEach((cat, ci) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="cat-header" data-cat="${cat.id}">
+        <h2 class="${cat.color}">${cat.nombre}</h2>
+        <span class="toggle open">▼</span>
+      </div>
+      <div class="cat-body" id="body-${cat.id}"></div>
+    `;
+    categoriasEl.appendChild(div);
+    const body = div.querySelector('.cat-body');
+    if (cat.type === 'grid') {
+      renderGridCat(body, cat);
+    } else {
+      renderSimpleCat(body, cat);
+    }
+    div.querySelector('.cat-header').addEventListener('click', () => {
+      const b = div.querySelector('.cat-body');
+      const t = div.querySelector('.toggle');
+      b.classList.toggle('collapsed');
+      t.classList.toggle('open');
+    });
+  });
+}
+
+function renderGridCat(el, cat) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tabla-wrap';
+  let html = '<table><thead><tr><th>' + cat.nombre + '</th>';
+  cat.productos.forEach(p => { html += '<th>' + p + '</th>'; });
+  html += '</tr></thead><tbody>';
+  cat.items.forEach(item => {
+    html += '<tr><td>' + item + '</td>';
+    cat.productos.forEach(prod => {
+      const val = getQty(cat.id, item, prod);
+      html += '<td><input class="qty" type="number" min="0" value="' + val + '" data-cat="' + cat.id + '" data-item="' + item + '" data-prod="' + prod + '"></td>';
+    });
+    html += '</tr>';
+  });
+  html += '<tr class="total-row"><td>TOTAL ' + cat.nombre + '</td>';
+  cat.productos.forEach(prod => {
+    let total = 0;
+    cat.items.forEach(item => { total += parseInt(getQty(cat.id, item, prod)) || 0; });
+    html += '<td id="t-' + cat.id + '-' + prod + '">' + total + '</td>';
+  });
+  html += '</tr></tbody></table>';
+  wrap.innerHTML = html;
+  el.appendChild(wrap);
+  el.querySelectorAll('input.qty').forEach(inp => {
+    inp.addEventListener('input', onQtyInput);
+  });
+}
+
+function renderSimpleCat(el, cat) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tabla-wrap simple-qty';
+  let html = '<table><thead><tr><th>' + cat.nombre + '</th><th>Cant.</th></tr></thead><tbody>';
+  cat.items.forEach(item => {
+    const val = getQty(cat.id, item);
+    html += '<tr><td>' + item + '</td><td><input class="qty" type="number" min="0" value="' + val + '" data-cat="' + cat.id + '" data-item="' + item + '"></td></tr>';
+  });
+  let total = 0;
+  cat.items.forEach(item => { total += parseInt(getQty(cat.id, item)) || 0; });
+  html += '<tr class="total-row"><td>TOTAL ' + cat.nombre + '</td><td id="t-' + cat.id + '">' + total + '</td></tr>';
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  el.appendChild(wrap);
+  el.querySelectorAll('input.qty').forEach(inp => {
+    inp.addEventListener('input', onQtyInput);
+  });
+}
+
+function onQtyInput(e) {
+  const inp = e.target;
+  const cat = inp.dataset.cat;
+  const item = inp.dataset.item;
+  const prod = inp.dataset.prod;
+  setQty(cat, item, inp.value, prod);
+  updateGridTotals(cat);
+}
+
+function updateGridTotals(catId) {
+  const cat = CATEGORIAS.find(c => c.id === catId);
+  if (!cat) return;
+  if (cat.type === 'grid') {
+    cat.productos.forEach(prod => {
+      let total = 0;
+      cat.items.forEach(item => { total += parseInt(getQty(catId, item, prod)) || 0; });
+      const el = document.getElementById('t-' + catId + '-' + prod);
+      if (el) el.textContent = total;
+    });
+  } else {
+    let total = 0;
+    cat.items.forEach(item => { total += parseInt(getQty(catId, item)) || 0; });
+    const el = document.getElementById('t-' + catId);
+    if (el) el.textContent = total;
+  }
+}
+
+// ===== RESUME =====
+function updateResumen() {
+  const totals = {};
+  let totalUnidades = 0;
+  CATEGORIAS.forEach(cat => {
+    let catTotal = 0;
+    if (cat.type === 'grid') {
+      cat.items.forEach(item => {
+        cat.productos.forEach(prod => {
+          const q = parseInt(getQty(cat.id, item, prod)) || 0;
+          catTotal += q;
+          totalUnidades += q;
+        });
+      });
+    } else {
+      cat.items.forEach(item => {
+        const q = parseInt(getQty(cat.id, item)) || 0;
+        catTotal += q;
+        totalUnidades += q;
+      });
+    }
+    totals[cat.nombre] = catTotal;
+  });
+  let html = '';
+  const colors = ['#ff6b6b','#ffa726','#66bb6a','#42a5f5','#ab47bc'];
+  CATEGORIAS.forEach((cat, i) => {
+    html += '<div class="resumen-item"><div class="label">' + cat.nombre + '</div><div class="value" style="color:' + colors[i % colors.length] + '">' + totals[cat.nombre] + '</div></div>';
+  });
+  html += '<div class="resumen-item"><div class="label">TOTAL ÍTEMS</div><div class="value green">' + totalUnidades + '</div></div>';
+  resumenGrid.innerHTML = html;
+  totalGeneral.textContent = '🎯 Total: ' + totalUnidades + ' unidades';
+}
+
+// ===== CLIENT SEARCH =====
+let selectedClientIdx = -1;
+
+searchCliente.addEventListener('input', function() {
+  const val = this.value.toLowerCase().trim();
+  selectedClientIdx = -1;
+  if (val.length < 2) { suggestions.style.display = 'none'; return; }
+  const matches = [];
+  for (let i = 0; i < CLIENTES.length; i++) {
+    const c = CLIENTES[i];
+    if (c.n.toLowerCase().includes(val)) {
+      matches.push({ ...c, idx: i });
+      if (matches.length >= 15) break;
+    }
+  }
+  if (!matches.length) { suggestions.style.display = 'none'; return; }
+  suggestions.innerHTML = matches.map((c, idx) =>
+    '<div data-idx="' + idx + '" data-client-idx="' + c.idx + '">' + c.n + ' <span class="ciudad">' + c.c + '</span></div>'
+  ).join('');
+  suggestions.style.display = 'block';
+  suggestions.querySelectorAll('div').forEach(el => {
+    el.addEventListener('click', function() {
+      const c = CLIENTES[parseInt(this.dataset.clientIdx)];
+      if (!c) return;
+      $('cliente').value = c.n;
+      $('direccion').value = c.d;
+      $('telefono').value = c.t;
+      $('ciudad').value = c.c;
+      $('nit').value = c.i;
+      searchCliente.value = c.n;
+      suggestions.style.display = 'none';
+      saveState();
+    });
+  });
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cliente-search')) {
+    suggestions.style.display = 'none';
+  }
+});
+
+// ===== GENERATE RESUME TEXT =====
+function generateResumeText() {
+  const cl = $('cliente').value || '____________________';
+  const dir = $('direccion').value || '____________________';
+  const tel = $('telefono').value || '____________________';
+  const ciu = $('ciudad').value || '____________________';
+  const nit = $('nit').value || '____________________';
+  const ven = $('vendedor').value || '____________________';
+  const fec = $('fecha').value || new Date().toISOString().split('T')[0];
+
+  let text = '=========================================\n';
+  text += '       HOJA DE PEDIDOS ARCO IRIS\n';
+  text += '=========================================\n\n';
+  text += 'CLIENTE:    ' + cl + '\n';
+  text += 'DIRECCIÓN:  ' + dir + '\n';
+  text += 'TELÉFONO:   ' + tel + '\n';
+  text += 'CIUDAD:     ' + ciu + '\n';
+  text += 'NIT:        ' + nit + '\n';
+  text += 'VENDEDOR:   ' + ven + '\n';
+  text += 'FECHA:      ' + fec + '\n\n';
+  text += '-----------------------------------------\n\n';
+
+  CATEGORIAS.forEach(cat => {
+    let hasItems = false;
+    let catLines = [];
+    if (cat.type === 'grid') {
+      cat.items.forEach(item => {
+        const lineParts = [item];
+        cat.productos.forEach(prod => {
+          const q = parseInt(getQty(cat.id, item, prod)) || 0;
+          lineParts.push(q);
+        });
+        if (lineParts.slice(1).some(v => v > 0)) {
+          hasItems = true;
+          const prodStr = cat.productos.map((p, i) => (lineParts[i+1] > 0 ? p + ':' + lineParts[i+1] : '')).filter(s => s).join(', ');
+          catLines.push('  ' + item + ' → ' + prodStr);
+        }
+      });
+    } else {
+      cat.items.forEach(item => {
+        const q = parseInt(getQty(cat.id, item)) || 0;
+        if (q > 0) {
+          hasItems = true;
+          catLines.push('  ' + item + ': ' + q);
+        }
+      });
+    }
+    if (hasItems) {
+      text += '📦 ' + cat.nombre + '\n';
+      text += catLines.join('\n') + '\n\n';
+    }
+  });
+
+  // totals
+  let totalUnidades = 0;
+  CATEGORIAS.forEach(cat => {
+    if (cat.type === 'grid') {
+      cat.items.forEach(item => {
+        cat.productos.forEach(prod => {
+          totalUnidades += parseInt(getQty(cat.id, item, prod)) || 0;
+        });
+      });
+    } else {
+      cat.items.forEach(item => {
+        totalUnidades += parseInt(getQty(cat.id, item)) || 0;
+      });
+    }
+  });
+
+  text += '-----------------------------------------\n';
+  text += 'TOTAL UNIDADES: ' + totalUnidades + '\n';
+  text += '=========================================\n\n';
+  text += 'Gracias por su pedido. Arco Iris 🎉\n';
+
+  return text;
+}
+
+// ===== ACTIONS =====
+$('btnGenerar').addEventListener('click', function() {
+  const text = generateResumeText();
+  resumenTexto.textContent = text;
+  resumenTexto.style.display = 'block';
+  $('btnCopiar').disabled = false;
+  $('btnDescargar').disabled = false;
+  showToast('✅ Resumen generado correctamente');
+});
+
+$('btnCopiar').addEventListener('click', function() {
+  const text = resumenTexto.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 Copiado al portapapeles');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Copiado al portapapeles');
+  });
+});
+
+$('btnDescargar').addEventListener('click', function() {
+  const text = resumenTexto.textContent;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const cl = ($('cliente').value || 'pedido').replace(/\s+/g, '_');
+  a.download = 'Pedido_ArcoIris_' + cl + '.txt';
+  a.href = url;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('⬇️ Archivo descargado');
+});
+
+$('btnEmail').addEventListener('click', function() {
+  const text = generateResumeText();
+  resumenTexto.textContent = text;
+  resumenTexto.style.display = 'block';
+  $('btnCopiar').disabled = false;
+  $('btnDescargar').disabled = false;
+  const cliente = $('cliente').value || 'Pedido';
+  const subject = encodeURIComponent('Pedido Arco Iris - ' + cliente);
+  const body = encodeURIComponent(text);
+  if (body.length < 2000) {
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+    showToast('📧 Abriendo cliente de correo...');
+  } else {
+    navigator.clipboard.writeText(text).then(function() {
+      window.location.href = 'mailto:?subject=' + subject;
+      showToast('📋 Resumen copiado al portapapeles. Péguelo en su correo (Ctrl+V)');
+    }).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('📋 Resumen copiado. Péguelo en su correo (Ctrl+V)');
+      window.location.href = 'mailto:?subject=' + subject;
+    });
+  }
+});
+
+$('btnLimpiar').addEventListener('click', function() {
+  if (!confirm('¿Está seguro de limpiar todo el pedido?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+// ===== TOAST =====
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ===== AUTO-SAVE ON CLIENT FIELDS =====
+['cliente','direccion','telefono','ciudad','nit','vendedor','fecha'].forEach(id => {
+  $(id).addEventListener('input', saveState);
+});
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
